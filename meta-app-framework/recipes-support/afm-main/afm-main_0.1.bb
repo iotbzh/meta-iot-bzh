@@ -16,10 +16,8 @@ HOMEPAGE = "http://iotbzh.github.io/afm-main"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master \
-	file://webkit-workaround.patch \
-"
-SRCREV = "507b8b43ed0768a8edafc21760184ee600ddafe6"
+SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master"
+SRCREV = "61be4f44b0019b57d6eeb65dda9f137dcdd129cf"
 
 SECTION = "base"
 
@@ -48,6 +46,7 @@ USERADD_PARAM_${PN} = "-g ${afm_name} -d ${afm_datadir} -r ${afm_name}"
 GROUPADD_PARAM_${PN} = "-r ${afm_name}"
 
 SYSTEMD_SERVICE_${PN} = "afm-system-daemon.service"
+SYSTEMD_AUTO_ENABLE = "enable"
 
 FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
