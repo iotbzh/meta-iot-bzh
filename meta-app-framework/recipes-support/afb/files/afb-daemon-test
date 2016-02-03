@@ -1,0 +1,6 @@
+#!/bin/sh
+
+killall -s KILL afb-daemon
+/usr/bin/afb-daemon --daemon --verbose --port=1234 --token='' --sessiondir=/tmp/1 --rootdir=/usr/share/agl/afb-client 2> /tmp/1.log
+/usr/bin/afb-daemon --daemon --verbose --port=1235 --token='' --sessiondir=/tmp/2 --rootdir=/usr/share/agl/afb-radio 2> /tmp/2.log
+/usr/bin/afb-daemon --daemon --verbose --port=1236 --token='' --sessiondir=/tmp/3 --rootdir=/usr/share/agl/afm-client 2> /tmp/3.log
