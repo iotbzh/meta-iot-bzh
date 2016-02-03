@@ -23,8 +23,8 @@ SECTION = "base"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "openssl libxml2 xmlsec1 dbus zip unzip json-c security-manager libcap"
-RDEPENDS_${PN} = "libcap-bin"
+DEPENDS = "openssl libxml2 xmlsec1 dbus zip unzip json-c security-manager libcap-native"
+#RDEPENDS_${PN} = "libcap-bin"
 
 #afm_name    = "agl-framework"
 afm_name    = "afm"
@@ -69,24 +69,22 @@ pkg_postinst_${PN}() {
     #!/bin/sh
 
     # avoid to run on host
-    [ x"$D" != "x" ] && exit 1
+#    [ x"$D" != "x" ] && exit 1
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
-    exit 0
 }
 
 pkg_postinst_${PN}_smack() {
     #!/bin/sh
 
     # avoid to run on host
-    [ x"$D" != "x" ] && exit 1
+#    [ x"$D" != "x" ] && exit 1
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
+    setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
     chown ${afm_name}:${afm_name} $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
     chsmack -a 'System::Shared' -t $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
-    setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
-    exit 0
 }
 
 BBCLASSEXTEND = "native nativesdk"
