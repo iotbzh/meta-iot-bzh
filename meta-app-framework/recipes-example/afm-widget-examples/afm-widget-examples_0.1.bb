@@ -1,4 +1,4 @@
-inherit allarch useradd
+inherit allarch
 
 SUMMARY = "Examples of widgets"
 DESCRIPTION = "Example of widgets for AGL framework afm"
@@ -11,10 +11,6 @@ SRCREV = "19e2d1de41bc8b25b21f1cbcf4bd31d9a18d67b6"
 
 S = "${WORKDIR}/git"
 
-USERADD_PACKAGES = "${PN}"
-
-USERADD_PARAM_${PN} = "-g users -d /home/widget-examples widget-examples"
-
 do_configure() {
     :
 }
@@ -24,9 +20,9 @@ do_compile() {
 }
 
 do_install() {
-    mkdir -p ${D}/home/widget-examples
-    cp ${S}/*.wgt ${D}/home/widget-examples
+    install -d ${D}${datadir}/widget-examples
+    install -m 644 ${S}/*.wgt ${D}${datadir}/widget-examples
 }
 
-FILES_${PN} += "/home/widget-examples/*.wgt"
+FILES_${PN} += "${datadir}/widget-examples/*.wgt"
 
