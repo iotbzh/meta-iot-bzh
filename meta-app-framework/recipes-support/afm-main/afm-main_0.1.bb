@@ -17,14 +17,13 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master"
-SRCREV = "61be4f44b0019b57d6eeb65dda9f137dcdd129cf"
+SRCREV = "792017f816d7c4eb24277bee14605c49164af5b3"
 
 SECTION = "base"
 
 S = "${WORKDIR}/git"
 
 DEPENDS = "openssl libxml2 xmlsec1 dbus zip unzip json-c security-manager libcap-native"
-#RDEPENDS_${PN} = "libcap-bin"
 
 #afm_name    = "agl-framework"
 afm_name    = "afm"
@@ -66,26 +65,24 @@ do_install_append() {
 }
 
 pkg_postinst_${PN}() {
-    #!/bin/sh
-
-    # avoid to run on host
-#    [ x"$D" != "x" ] && exit 1
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
+    setcap cap_mac_override=ie $D${bindir}/afm-system-daemon
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
 }
 
 pkg_postinst_${PN}_smack() {
-    #!/bin/sh
-
-    # avoid to run on host
-#    [ x"$D" != "x" ] && exit 1
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
+    setcap cap_mac_override=ie $D${bindir}/afm-system-daemon
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
     chown ${afm_name}:${afm_name} $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
     chsmack -a 'System::Shared' -t $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
 }
+
+PACKAGES =+ "${PN}-tools"
+FILES_${PN}-tools = "${bindir}/wgtpkg-*"
+
 
 BBCLASSEXTEND = "native nativesdk"
 
