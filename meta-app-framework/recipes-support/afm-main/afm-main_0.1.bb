@@ -17,7 +17,7 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master"
-SRCREV = "7632c5fdfb2bced129e46adcfe5329e386eee303"
+SRCREV = "bf650bc39188c86cec8a11097f2c341e3f1b54b1"
 
 SECTION = "base"
 
@@ -51,7 +51,7 @@ FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
 
-RDEPENDS_${PN}_append_smack = " smack-userspace libcap"
+RDEPENDS_${PN}_append_smack = " smack-userspace"
 DEPENDS_append_smack = " smack-userspace-native"
 
 # short hack here
@@ -67,14 +67,14 @@ do_install_append() {
 pkg_postinst_${PN}() {
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
-    setcap cap_mac_override=ie $D${bindir}/afm-system-daemon
+    setcap cap_mac_override,cap_dac_override=pe $D${bindir}/afm-system-daemon
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
 }
 
 pkg_postinst_${PN}_smack() {
 
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
-    setcap cap_mac_override=ie $D${bindir}/afm-system-daemon
+    setcap cap_mac_override,cap_dac_override=pe $D${bindir}/afm-system-daemon
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
     chown ${afm_name}:${afm_name} $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
     chsmack -a 'System::Shared' -t $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
