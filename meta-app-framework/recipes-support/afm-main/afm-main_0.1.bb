@@ -23,7 +23,7 @@ SECTION = "base"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "openssl libxml2 xmlsec1 dbus libzip json-c security-manager libcap-native libcap-native attr-native"
+DEPENDS = "openssl libxml2 xmlsec1 dbus libzip json-c security-manager libcap-native"
 
 #afm_name    = "agl-framework"
 afm_name    = "afm"
@@ -51,7 +51,6 @@ FILES_${PN} += "\
 	${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '${systemd_user_unitdir}/afm-user-daemon.service', '', d)} \
 "
 
-RDEPENDS_${PN} += "libcap-bin"
 RDEPENDS_${PN}_append_smack = " smack-userspace"
 DEPENDS_append_smack = " smack-userspace-native"
 
@@ -66,14 +65,12 @@ do_install_append() {
 }
 
 pkg_postinst_${PN}() {
-
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
     setcap cap_mac_override,cap_dac_override=ie $D${bindir}/afm-system-daemon
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
 }
 
 pkg_postinst_${PN}_smack() {
-
     mkdir -p $D${afm_datadir}/applications $D${afm_datadir}/icons
     chown ${afm_name}:${afm_name} $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
     chsmack -a 'System::Shared' -t $D${afm_datadir} $D${afm_datadir}/applications $D${afm_datadir}/icons
@@ -83,7 +80,6 @@ pkg_postinst_${PN}_smack() {
 
 PACKAGES =+ "${PN}-tools"
 FILES_${PN}-tools = "${bindir}/wgtpkg-*"
-
 
 BBCLASSEXTEND = "native nativesdk"
 
