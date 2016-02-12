@@ -9,7 +9,7 @@ DESCRIPTION = "\
 "
 
 HOMEPAGE = "http://nih.at/libzip/index.html"
-LICENSE = "libzip"
+LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=23ebf7ca347ed9703b4ef40824d0ef66"
 
 SRC_URI = "http://nih.at/libzip/libzip-1.1.1.tar.xz;md5sum=0c86a1a94fbc3ec6724801036726ae1f"
