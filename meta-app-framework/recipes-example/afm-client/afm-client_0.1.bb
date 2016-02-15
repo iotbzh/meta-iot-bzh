@@ -13,7 +13,7 @@ RDEPENDS_${PN} = "afm-main afb-daemon afb-daemon-plugin-afm-main afb-daemon-plug
 SRC_URI = "git://github.com/iotbzh/afm-client;protocol=https;branch=master \
            file://afm-client \
           "
-SRCREV = "3987c8c897acbb2152bd6163629930e36d104f1c"
+SRCREV = "3b41514b25ab77470ff45623b5a7a6b09c088a43"
 S = "${WORKDIR}/git"
 
 do_install () {
