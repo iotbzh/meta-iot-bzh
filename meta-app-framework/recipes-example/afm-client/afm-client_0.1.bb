@@ -4,6 +4,8 @@ Application Framework Manager to install, start, stop, or remove \
 applications provided as .wgt widget packages."
 HOMEPAGE = "http://www.iot.bzh"
 
+inherit systemd
+
 LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6cb04bdb88e11107e3af4d8e3f301be5"
 
@@ -12,8 +14,9 @@ RDEPENDS_${PN} = "afm-main afb-daemon afb-daemon-plugin-afm-main afb-daemon-plug
 
 SRC_URI = "git://github.com/iotbzh/afm-client;protocol=https;branch=master \
            file://afm-client \
+           file://afm-client.service \
           "
-SRCREV = "0d7162f1181453e63bb40853a2b636d31ef9d36a"
+SRCREV = "ce8894a5a1123236e31e6d2497932b6d5da96958"
 S = "${WORKDIR}/git"
 
 do_install () {
@@ -22,6 +25,13 @@ do_install () {
 
   mkdir -p ${D}/${bindir}
   install -m 0755 ${WORKDIR}/afm-client ${D}/${bindir}/afm-client
+
+  if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+    install -d ${D}${systemd_user_unitdir}
+    install -d ${D}${sysconfdir}/systemd/user/default.target.wants
+    install -m 0644 ${WORKDIR}/afm-client.service ${D}/${systemd_user_unitdir}/afm-client.service
+    ln -sf ${systemd_user_unitdir}/afm-client.service ${D}${sysconfdir}/systemd/user/default.target.wants
+  fi
 }
 
-FILES_${PN} += "${datadir}"
+FILES_${PN} += "${datadir} ${systemd_user_unitdir}"
