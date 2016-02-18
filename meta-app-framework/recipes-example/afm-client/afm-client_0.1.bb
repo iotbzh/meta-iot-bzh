@@ -16,7 +16,7 @@ SRC_URI = "git://github.com/iotbzh/afm-client;protocol=https;branch=master \
            file://afm-client \
            file://afm-client.service \
           "
-SRCREV = "b8e7c8fa632da568a47431ec1a115b43a9e09113"
+SRCREV = "831250c0a451c7875c6262f62cc6d51ccf72a938"
 S = "${WORKDIR}/git"
 
 do_install () {
