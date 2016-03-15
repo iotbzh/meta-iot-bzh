@@ -7,7 +7,7 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://github.com/iotbzh/afm-widget-examples;protocol=https;branch=master"
-SRCREV = "19e2d1de41bc8b25b21f1cbcf4bd31d9a18d67b6"
+SRCREV = "58ca868490f9c814c5bb6a9a1b27532d337fabd7"
 
 S = "${WORKDIR}/git"
 
