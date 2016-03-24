@@ -4,8 +4,8 @@ interface to various automotive-oriented plugins (sound, radio...), \
 allowing HTML5 UIs to send platform-specific requests in a secure way."
 HOMEPAGE = "http://www.iot.bzh"
 
-LICENSE = "GPLv3+"
-LIC_FILES_CHKSUM = "file://src/main.c;endline=17;md5=6cb04bdb88e11107e3af4d8e3f301be5"
+LICENSE = "APACHE-2"
+LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 DEPENDS = "file json-c libmicrohttpd util-linux dbus alsa-lib rtl-sdr glib-2.0 gssdp gupnp gupnp-av"
 RDEPENDS_${PN} = "qtquickcontrols-qmlplugins qtwebengine-qmlplugins"
