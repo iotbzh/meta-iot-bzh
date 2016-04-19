@@ -68,6 +68,17 @@ do_configure_append_porter() {
    kernel_configure_variable CRC_ITU_T m
    kernel_configure_variable AVERAGE y
 
+   # initrd support + NBD support
+   kernel_configure_variable BLK_DEV_INITRD y
+   kernel_configure_variable INITRAMFS_SOURCE ""
+   kernel_configure_variable RD_GZIP y
+   kernel_configure_variable BLK_DEV_NBD y
+   kernel_configure_variable BLK_DEV_RAM y
+   kernel_configure_variable BLK_DEV_RAM_COUNT 16
+   kernel_configure_variable BLK_DEV_RAM_SIZE 4096
+   kernel_configure_variable BLK_DEV_XIP y
+   kernel_configure_variable DECOMPRESS_GZIP y
+
    yes '' | oe_runmake -C ${S} O=${B} oldconfig
 }
 
