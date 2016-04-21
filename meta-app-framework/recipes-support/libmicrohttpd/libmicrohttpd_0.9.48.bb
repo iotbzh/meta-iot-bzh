@@ -12,7 +12,7 @@ SRC_URI[sha256sum] = "87667e158f2bf8c691a002e256ffe30885d4121a9ee4143af0320c47cd
 inherit autotools lib_package
 
 # disable spdy, because it depends on openssl
-EXTRA_OECONF += "--disable-static --with-gnutls=${STAGING_LIBDIR}/../ --disable-spdy"
+EXTRA_OECONF += "--disable-static --with-gnutls=${STAGING_LIBDIR}/../"
 
 PACKAGECONFIG ?= "curl"
 PACKAGECONFIG_append_class-target = "\
