@@ -1,7 +1,7 @@
-# Netboot initramfs image. 
+# Netboot initramfs image.
 DESCRIPTION = "Netboot initrd image"
 
-PACKAGE_INSTALL = "initramfs-netboot busybox base-passwd ${ROOTFS_BOOTSTRAP_INSTALL} strace lsof"
+PACKAGE_INSTALL = "initramfs-netboot busybox base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""

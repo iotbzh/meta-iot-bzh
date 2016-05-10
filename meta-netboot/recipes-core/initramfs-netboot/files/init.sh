@@ -1,13 +1,21 @@
 #!/bin/sh
 
+################################################################################
+#
+# Init script to boot over network through NBD
+#
+# Contact: Stéphane Desneux <stephane.desneux@iot.bzh>
+#
+################################################################################
+
 # banner generator: echo "AGL - Netboot" | figlet -f slant -w 80 -c
 cat <<'EOF' >&2
 ________________________________________________________________________________
-         ___   ________                _   __     __  __                __      
-        /   | / ____/ /               / | / /__  / /_/ /_  ____  ____  / /_     
-       / /| |/ / __/ /      ______   /  |/ / _ \/ __/ __ \/ __ \/ __ \/ __/     
-      / ___ / /_/ / /___   /_____/  / /|  /  __/ /_/ /_/ / /_/ / /_/ / /_       
-     /_/  |_\____/_____/           /_/ |_/\___/\__/_.___/\____/\____/\__/       
+         ___   ________                _   __     __  __                __
+        /   | / ____/ /               / | / /__  / /_/ /_  ____  ____  / /_
+       / /| |/ / __/ /      ______   /  |/ / _ \/ __/ __ \/ __ \/ __ \/ __/
+      / ___ / /_/ / /___   /_____/  / /|  /  __/ /_/ /_/ / /_/ / /_/ / /_
+     /_/  |_\____/_____/           /_/ |_/\___/\__/_.___/\____/\____/\__/
 ________________________________________________________________________________
 EOF
 
@@ -63,8 +71,8 @@ do_mount_fs tmpfs /tmp
 do_mount_fs tmpfs /run
 
 # parse kernel commandline to get NBD server
-for x in $(cat /proc/cmdline); do 
-	case $x in 
+for x in $(cat /proc/cmdline); do
+	case $x in
 		nbd.server=*) NBD_SERVER=${x/*=/};;
 		nbd.port=*) NBD_PORT=${x/*=/};;
 		nbd.dev=*)  NBD_DEV=/dev/${x/*=/};;
@@ -78,7 +86,7 @@ log_info "NBD parameters: device $NBD_DEV, server $NBD_SERVER:$NBD_PORT"
 
 # check if smack is active (and if so, mount smackfs)
 grep -q smackfs /proc/filesystems && {
-	SMACK=y 
+	SMACK=y
 
 	do_mount_fs smackfs /sys/fs/smackfs
 
@@ -98,20 +106,13 @@ while :;do
 	bail_out "Unable to mount NBD device $NBD_DEV using server $NBD_SERVER:$NBD_PORT"
 done
 
-# TODO: not sure if needed
-#if [[ "$SMACK" == "y" ]]; then
-#	log_info "Restoring SMACK context for systemd"
-#	echo _ >/proc/self/attr/current
-#	umount /sys/fs/smackfs
-#fi
-
 # mount NBD device
 mkdir -p /sysroot
 mount $NBD_DEV /sysroot || bail_out "Unable to mount root NBD device"
 
 # move mounted devices to new root
 cd /sysroot
-for x in dev proc sys tmp run; do 
+for x in dev proc sys tmp run; do
 	log_info "Moving /$x to new rootfs"
 	mount -o move /$x $x
 done
@@ -135,13 +136,14 @@ log_info "Exec'ing systemd"
 # banner generator: echo "AGL Booting . . ." | figlet -f slant -w 80 -c
 cat <<'EOF' >&2
 ________________________________________________________________________________
-      ___   ________       ____              __  _                              
-     /   | / ____/ /      / __ )____  ____  / /_(_)___  ____ _                  
-    / /| |/ / __/ /      / __  / __ \/ __ \/ __/ / __ \/ __ `/                  
-   / ___ / /_/ / /___   / /_/ / /_/ / /_/ / /_/ / / / / /_/ /   _     _     _   
-  /_/  |_\____/_____/  /_____/\____/\____/\__/_/_/ /_/\__, /   (_)   (_)   (_)  
+      ___   ________       ____              __  _
+     /   | / ____/ /      / __ )____  ____  / /_(_)___  ____ _
+    / /| |/ / __/ /      / __  / __ \/ __ \/ __/ / __ \/ __ `/
+   / ___ / /_/ / /___   / /_/ / /_/ / /_/ / /_/ / / / / /_/ /   _     _     _
+  /_/  |_\____/_____/  /_____/\____/\____/\__/_/_/ /_/\__, /   (_)   (_)   (_)
 _____________________________________________________/____/_____________________
 EOF
 
 exec /lib/systemd/systemd </dev/console >/dev/console 2>&1
 bail_out
+
