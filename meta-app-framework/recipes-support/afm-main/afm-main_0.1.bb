@@ -17,18 +17,18 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master"
-SRCREV = "2ddd0a58dae834f173277e51488f6ba30f1cad6a"
+SRCREV = "89805c265bbba9bdf2360aa6205880c444d5c119"
 
 SECTION = "base"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "openssl libxml2 xmlsec1 dbus libzip json-c security-manager libcap-native"
+DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c security-manager libcap-native afb-daemon"
 
-#afm_name    = "agl-framework"
 afm_name    = "afm"
 afm_confdir = "${sysconfdir}/${afm_name}"
 afm_datadir = "${datadir}/${afm_name}"
+afb_plugin_dir = "${libdir}/afb"
 
 EXTRA_OECMAKE = "\
 	-DUSE_LIBZIP=1 \
@@ -78,8 +78,13 @@ pkg_postinst_${PN}_smack() {
     setcap cap_mac_override,cap_mac_admin,cap_setgid=ie $D${bindir}/afm-user-daemon
 }
 
-PACKAGES =+ "${PN}-tools"
+PACKAGES =+ "${PN}-afbplugin ${PN}-afbplugin-dbg"
+FILES_${PN}-afbplugin = " ${afb_plugin_dir}/afm-main-plugin.so "
+FILES_${PN}-afbplugin-dbg = " ${afb_plugin_dir}/.debug/afm-main-plugin.so "
+
+PACKAGES =+ "${PN}-tools ${PN}-tools-dbg"
 FILES_${PN}-tools = "${bindir}/wgtpkg-*"
+FILES_${PN}-tools-dbg = "${bindir}/.debug/wgtpkg-*"
 
 BBCLASSEXTEND = "native nativesdk"
 
