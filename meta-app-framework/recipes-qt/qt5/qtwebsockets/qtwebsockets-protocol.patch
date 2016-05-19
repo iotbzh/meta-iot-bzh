@@ -1,0 +1,182 @@
+--- a/src/websockets/qwebsocket.h	2016-05-19 06:48:05.067283015 +0200
++++ b/src/websockets/qwebsocket.h	2016-05-19 06:52:16.493302429 +0200
+@@ -79,6 +79,7 @@
+     QNetworkProxy proxy() const;
+     void setProxy(const QNetworkProxy &networkProxy);
+ #endif
++    void setProtocol(const QString &protocol);
+     void setMaskGenerator(const QMaskGenerator *maskGenerator);
+     const QMaskGenerator *maskGenerator() const;
+     qint64 readBufferSize() const;
+@@ -92,6 +93,7 @@
+     QWebSocketProtocol::Version version() const;
+     QString resourceName() const;
+     QUrl requestUrl() const;
++    QString protocol() const;
+     QString origin() const;
+     QWebSocketProtocol::CloseCode closeCode() const;
+     QString closeReason() const;
+--- a/src/websockets/qwebsocket.cpp	2016-05-19 06:47:59.960282621 +0200
++++ b/src/websockets/qwebsocket.cpp	2016-05-19 06:57:43.652327690 +0200
+@@ -518,6 +518,15 @@
+ }
+ 
+ /*!
++    \brief Returns the protocol the socket wants or has wanted to use.
++ */
++QString QWebSocket::protocol() const
++{
++    Q_D(const QWebSocket);
++    return d->protocol();
++}
++
++/*!
+     \brief Returns the current origin.
+  */
+ QString QWebSocket::origin() const
+@@ -630,6 +639,15 @@
+ #endif
+ 
+ /*!
++    Sets the wanted protocol
++ */
++void QWebSocket::setProtocol(const QString &protocol)
++{
++    Q_D(QWebSocket);
++    d->setProtocol(protocol);
++}
++
++/*!
+     Sets the generator to use for creating masks to \a maskGenerator.
+     The default QWebSocket generator can be reset by supplying a \e Q_NULLPTR.
+     The mask generator can be changed at any time, even while the connection is open.
+--- a/src/websockets/qwebsocket_p.cpp	2016-05-19 02:12:27.727006083 +0200
++++ b/src/websockets/qwebsocket_p.cpp	2016-05-19 02:29:27.329084812 +0200
+@@ -1060,7 +1060,7 @@
+                                                 % QString::number(m_requestUrl.port(port)),
+                                            origin(),
+                                            QString(),
+-                                           QString(),
++                                           m_protocol,
+                                            m_key);
+             if (handshake.isEmpty()) {
+                 m_pSocket->abort();
+--- a/src/imports/qmlwebsockets/plugins.qmltypes	2016-05-19 02:18:52.618035802 +0200
++++ b/src/imports/qmlwebsockets/plugins.qmltypes	2016-05-19 02:37:32.798122297 +0200
+@@ -24,6 +24,7 @@
+             }
+         }
+         Property { name: "url"; type: "QUrl" }
++        Property { name: "protocol"; type: "string" }
+         Property { name: "status"; type: "Status"; isReadonly: true }
+         Property { name: "errorString"; type: "string"; isReadonly: true }
+         Property { name: "active"; type: "bool" }
+@@ -73,6 +74,10 @@
+             name: "urlChanged"
+             Parameter { name: "url"; type: "QUrl" }
+         }
++       Signal {
++            name: "protocolChanged"
++            Parameter { name: "protocol"; type: "QString" }
++        }
+         Signal {
+             name: "portChanged"
+             Parameter { name: "port"; type: "ushort" }
+--- a/src/imports/qmlwebsockets/qqmlwebsocket.h	2016-05-19 02:24:56.255063881 +0200
++++ b/src/imports/qmlwebsockets/qqmlwebsocket.h	2016-05-19 02:34:20.011107411 +0200
+@@ -50,6 +50,7 @@
+ 
+     Q_ENUMS(Status)
+     Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
++    Q_PROPERTY(QString protocol READ protocol WRITE setProtocol NOTIFY protocolChanged)
+     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
+     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
+     Q_PROPERTY(bool active READ isActive WRITE setActive NOTIFY activeChanged)
+@@ -70,6 +71,8 @@
+ 
+     QUrl url() const;
+     void setUrl(const QUrl &url);
++    QString protocol() const;
++    void setProtocol(const QString &protocol);
+     Status status() const;
+     QString errorString() const;
+ 
+@@ -85,6 +88,7 @@
+     void activeChanged(bool isActive);
+     void errorStringChanged(QString errorString);
+     void urlChanged();
++    void protocolChanged();
+ 
+ public:
+     void classBegin() Q_DECL_OVERRIDE;
+@@ -98,6 +102,7 @@
+     QScopedPointer<QWebSocket> m_webSocket;
+     Status m_status;
+     QUrl m_url;
++    QString m_protocol;
+     bool m_isActive;
+     bool m_componentCompleted;
+     QString m_errorString;
+--- a/src/imports/qmlwebsockets/qqmlwebsocket.cpp	2016-05-21 05:56:55.366359682 +0200
++++ b/src/imports/qmlwebsockets/qqmlwebsocket.cpp	2016-05-21 05:56:01.760731883 +0200
+@@ -107,6 +107,7 @@
+     m_webSocket(),
+     m_status(Closed),
+     m_url(),
++    m_protocol(),
+     m_isActive(false),
+     m_componentCompleted(true),
+     m_errorString()
+@@ -117,6 +118,7 @@
+     QObject(parent),
+     m_status(Closed),
+     m_url(socket->requestUrl()),
++    m_protocol(socket->protocol()),
+     m_isActive(true),
+     m_componentCompleted(true),
+     m_errorString(socket->errorString())
+@@ -150,12 +152,34 @@
+         return;
+     }
+     if (m_webSocket && (m_status == Open)) {
+-        m_webSocket->close();
++        close();
+     }
+     m_url = url;
+     Q_EMIT urlChanged();
+     if (m_webSocket) {
+-        m_webSocket->open(m_url);
++        open();
++    }
++}
++
++QString QQmlWebSocket::protocol() const
++{
++    return m_protocol;
++}
++
++void QQmlWebSocket::setProtocol(const QString &protocol)
++{
++    if (m_protocol == protocol) {
++        return;
++    }
++
++    if (m_webSocket && (m_status == Open)) {
++        close();
++    }
++
++    m_protocol = protocol;
++    Q_EMIT protocolChanged();
++    if (m_webSocket) {
++        open();
+     }
+ }
+ 
+@@ -279,6 +303,7 @@
+ void QQmlWebSocket::open()
+ {
+     if (m_componentCompleted && m_isActive && m_url.isValid() && Q_LIKELY(m_webSocket)) {
++        m_webSocket->setProtocol(m_protocol);
+         m_webSocket->open(m_url);
+     }
+ }
