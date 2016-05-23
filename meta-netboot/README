@@ -7,7 +7,7 @@ Content and usage
 -----------------
 
 This layer creates a new supplementary initrd image which can be downloaded through TFTP with the kernel.
-At boot time, the init sicript will try to mount the rootfs based on the following kernel command line parameters:
+At boot time, the init script will try to mount the rootfs based on the following kernel command line parameters:
 * nbd.server: IP address to reach the NBD server
 * nbd.port: TCP port on which server is listening (default: 10809)
 * nbd.dev: nbd device to use (default: /dev/nbd0)
@@ -18,8 +18,10 @@ The layer meta-netboot contains recipes for the following components:
 * initramfs-netboot: contains the init script started by the kernel: basically, this script mounts the real root filesystem, then pivot_root on it and finally exec systemd.
 * initramfs-netboot-image: image to specify for building the initrd
 
-The conf/layer.conf adds the necessary variables to build the netboot initrd and run an nbd serve
-r on an ext4 rootfs.
+To enable the build of the netboot initrd and ext4 rootfs, add the following line in conf/local.conf:
+
+INHERIT += "netboot"
+
 
 Server side
 -----------
@@ -33,6 +35,7 @@ On the server side (assuming that the build dir is stored in $BUILD) we can run:
 * a NBD server, for example xnbd-server, used to expose the whole ext4 rootfs as a network block device:
 
   xnbd-server --target --lport 10809 $BUILD/tmp/deploy/images/$MACHINE/agl-demo-platform-$MACHINE.ext4
+
 
 Target side
 -----------
