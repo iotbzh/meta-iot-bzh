@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
 #DEPENDS = "file json-c libmicrohttpd libsystemd util-linux alsa-lib rtl-sdr glib-2.0 gssdp gupnp gupnp-av"
 DEPENDS = "file json-c libmicrohttpd systemd util-linux"
-RDEPENDS_${PN} = "qtquickcontrols-qmlplugins qtwebengine-qmlplugins"
+RDEPENDS_${PN} = "qtquickcontrols-qmlplugins"
 
 SRC_URI = "git://github.com/iotbzh/afb-daemon;protocol=https;branch=master \
            file://afb-daemon-test \
