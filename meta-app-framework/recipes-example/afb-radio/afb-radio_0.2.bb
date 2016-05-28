@@ -9,12 +9,12 @@ LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6cb04bdb88e11107e3af4d8e3f301be5"
 
 #DEPENDS = "nodejs-native"
-RDEPENDS_${PN} = "afb-daemon afb-daemon-plugin-audio afb-daemon-plugin-radio afb-daemon-plugin-media afb-daemon-plugin-token"
+RDEPENDS_${PN} = "afb-daemon afb-daemon-plugin-audio afb-daemon-plugin-radio afb-daemon-plugin-media afb-daemon-plugin-authlogin"
 
 SRC_URI = "git://github.com/iotbzh/afb-radio;protocol=https;branch=master \
            file://afb-radio \
           "
-SRCREV = "b2bc616a48824b32851c972feaaea614297aec20"
+SRCREV = "282990aab7381b347a0935940d567584f5035556"
 S = "${WORKDIR}/git"
 
 do_install () {

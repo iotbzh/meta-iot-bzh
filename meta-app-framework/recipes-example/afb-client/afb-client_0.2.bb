@@ -7,12 +7,12 @@ LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6cb04bdb88e11107e3af4d8e3f301be5"
 
 #DEPENDS = "nodejs-native"
-RDEPENDS_${PN} = "afb-daemon afb-daemon-plugin-token"
+RDEPENDS_${PN} = "afb-daemon afb-daemon-plugin-authlogin"
 
 SRC_URI = "git://github.com/iotbzh/afb-client;protocol=https;branch=master \
            file://afb-client \
           "
-SRCREV = "daf54f0afc85c988536924e6561e1d800cd403c3"
+SRCREV = "aea8e5ed904ae9334f5d3f87c5d51016990837d8"
 S = "${WORKDIR}/git"
 
 do_install () {

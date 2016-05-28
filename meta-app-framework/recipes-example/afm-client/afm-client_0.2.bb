@@ -10,13 +10,13 @@ LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6cb04bdb88e11107e3af4d8e3f301be5"
 
 #DEPENDS = "nodejs-native"
-RDEPENDS_${PN} = "afm-main afb-daemon afm-main-afbplugin afb-daemon-plugin-samplepost afb-daemon-plugin-token"
+RDEPENDS_${PN} = "afm-main afb-daemon afm-main-afbplugin afb-daemon-plugin-demopost afb-daemon-plugin-authlogin"
 
 SRC_URI = "git://github.com/iotbzh/afm-client;protocol=https;branch=master \
            file://afm-client \
            file://afm-client.service \
           "
-SRCREV = "1841aef7935c4771e181933ac0cab403f919f066"
+SRCREV = "5baf6cab7a132ce9f601e888f680d973bc4cc710"
 S = "${WORKDIR}/git"
 
 do_install () {
