@@ -1,3 +1,3 @@
 #!/bin/sh
-exec /usr/bin/qt5/qmlscene "$1" /usr/bin/web-runtime-webkit.qml
+LD_PRELOAD=/usr/lib/libEGL.so exec /usr/bin/qt5/qmlscene "$1" /usr/bin/web-runtime-webkit.qml
 

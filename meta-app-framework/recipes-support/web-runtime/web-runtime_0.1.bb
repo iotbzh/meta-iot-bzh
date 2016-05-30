@@ -7,10 +7,12 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
 SRC_URI = "\
-	file://web-runtime;md5sum=f9f216c568feb4754b9faff3e4fdd22f \
+	file://web-runtime;md5sum=d3df0a4d671506640ceb7e6bc8ec9697 \
 	file://web-runtime.qml;md5sum=5d6a379e9b7e5654319e5ba638824a58 \
 	file://web-runtime-webkit.qml;md5sum=4daf9df39078634c27a7923d37e82e3d \
 "
+
+RDEPENDS_${PN} = "qtwebkit-qmlplugins"
 
 do_configure() {
     :
