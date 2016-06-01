@@ -1,6 +1,6 @@
 RDEPENDS_${PN} += "\
-	afm-main \
-	afb-daemon \
+	af-main \
+	af-binder \
 	afb-client \
 	afb-radio \
 	web-runtime \

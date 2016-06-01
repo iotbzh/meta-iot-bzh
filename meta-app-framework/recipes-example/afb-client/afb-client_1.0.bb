@@ -7,7 +7,7 @@ LICENSE = "GPLv3+"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=6cb04bdb88e11107e3af4d8e3f301be5"
 
 #DEPENDS = "nodejs-native"
-RDEPENDS_${PN} = "afb-daemon afb-daemon-plugin-authlogin"
+RDEPENDS_${PN} = "af-binder af-binder-plugin-authlogin"
 
 SRC_URI = "git://github.com/iotbzh/afb-client;protocol=https;branch=master \
            file://afb-client \

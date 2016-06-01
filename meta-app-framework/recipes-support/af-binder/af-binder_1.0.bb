@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://LICENSE-2.0.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 DEPENDS = "file json-c libmicrohttpd systemd util-linux"
 DEPENDS += "alsa-lib rtl-sdr glib-2.0 gssdp gupnp gupnp-av pulseaudio"
 
-SRC_URI = "git://github.com/iotbzh/afb-daemon;protocol=https;branch=master"
+SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-binder;protocol=https;branch=master"
 SRCREV = "917b85d762e00662460da5e74b89d43d3355f2ef"
 S = "${WORKDIR}/git"
 

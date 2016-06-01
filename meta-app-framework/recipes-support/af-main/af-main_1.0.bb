@@ -6,7 +6,7 @@
 
 inherit cmake pkgconfig useradd systemd
 
-SUMMARY = "AGL Framework Master, main part"
+SUMMARY = "AGL Framework Main part"
 DESCRIPTION = "\
 This is a core framework component for managing \
 applications, widgets, and components. \
@@ -16,14 +16,14 @@ HOMEPAGE = "http://iotbzh.github.io/afm-main"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRC_URI = "git://github.com/iotbzh/afm-main;protocol=https;branch=master"
+SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/app-framework-main;protocol=https;branch=master"
 SRCREV = "4a9396e083419695265fa15f06a7409cd73529f8"
 
 SECTION = "base"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c security-manager libcap-native afb-daemon"
+DEPENDS = "openssl libxml2 xmlsec1 systemd libzip json-c security-manager libcap-native af-binder"
 
 afm_name    = "afm"
 afm_confdir = "${sysconfdir}/${afm_name}"
