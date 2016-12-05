@@ -28,7 +28,6 @@ $ cd meta-intel-iot-security; git checkout 74584c8; cd ..
 
 * In your existing _"$BUILD_DIR/conf/bblayers.conf"_ file, add:
 ```
-  /home/SDK/AGL/poky/../meta-agl/meta-agl-security \
   /home/SDK/AGL/poky/../meta-intel-iot-security/meta-security-smack \
   /home/SDK/AGL/poky/../meta-intel-iot-security/meta-security-framework \
   /home/SDK/AGL/poky/../meta-iot-agl/meta-app-framework \
