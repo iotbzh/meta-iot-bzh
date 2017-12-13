@@ -14,7 +14,7 @@ inherit cmake aglwgt pkgconfig
 S = "${WORKDIR}/git/agl-identity-service"
 
 DEPENDS = "curl af-binder json-c systemd"
-RDEPENDS_${PN} += "ll-database nfc-binding agl-spotify-binding"
+RDEPENDS_${PN} += "ll-database agl-service-nfc agl-spotify-binding"
 
 
 do_install() {

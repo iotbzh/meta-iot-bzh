@@ -4,3 +4,5 @@ RDEPENDS_${PN} += "\
     agl-identity-agent \
 "
 
+LICENSE = "MIT"
+
