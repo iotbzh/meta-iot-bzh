@@ -1,2 +1,0 @@
-RDEPENDS += "packagegroup-demo-hmi"
-
