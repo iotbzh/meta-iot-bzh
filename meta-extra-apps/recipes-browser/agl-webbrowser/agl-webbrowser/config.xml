@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" id="agl-webbrowser" version="5.0">
+	<name>agl-webbrowser</name>
+	<icon src="icon.png"/>
+	<content src="bin/runxdg" type="application/vnd.agl.native"/>
+	<description>Chromium wrapper widget</description>
+	<author>Forlot Romain &lt;romain.forlot@iot.bzh&gt;</author>
+	<license>APL2.0</license>
+
+	<feature name="urn:AGL:widget:required-permission">
+		<param name="urn:AGL:permission::public:no-htdocs" value="required" />
+	</feature>
+</widget>
+

@@ -1,0 +1,25 @@
+[application]
+# role: identifier for WindowManager (used in layers.json)
+# e.g. role = "WebBrowser"
+role = "POI"
+
+# launch by "POSIX"(fork/exec), "AFM_DBUS"(afm via dbus),  "AFM_WEBSOCKET"(afm via websockt)
+method = "POSIX"
+
+# path: path to the executable
+# e.g.
+path = "/usr/bin/chromium"
+
+# params: arguments of the excecutable 
+# e.g.
+   params = [
+     "--touch-events=enabled",
+     "--enable-wayland-ime",
+     "--use-ime-service",
+     "--mus",
+     "--no-sandbox",
+     '--kiosk',
+     "--ozone-platform=wayland",
+     "https://www.google.com"
+   ]
+
