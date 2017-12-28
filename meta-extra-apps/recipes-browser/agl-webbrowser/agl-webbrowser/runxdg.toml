@@ -18,7 +18,8 @@ path = "/usr/bin/chromium"
      "--use-ime-service",
      "--mus",
      "--no-sandbox",
-     '--kiosk',
+     "--kiosk",
+     "--window-size=1080,1488",
      "--ozone-platform=wayland",
      "https://www.google.com"
    ]
