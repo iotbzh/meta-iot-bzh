@@ -2,7 +2,7 @@
 <widget xmlns="http://www.w3.org/ns/widgets" id="Spotify" version="5.0">
 	<name>Spotify</name>
 	<icon src="icon.png"/>
-	<content src="index.html" type="text/html"/>
+	<content src="bin/runxdg" type="application/vnd.agl.native"/>
 	<description>HTML5 AGL Spotify widget</description>
 	<author>Forlot Romain &lt;romain.forlot@iot.bzh&gt;</author>
 	<license>APL2.0</license>
