@@ -11,6 +11,7 @@
 		<param name="spotify" value="ws" />
 		<param name="homescreen" value="ws" />
 		<param name="windowmanager" value="ws" />
+		<param name="identity" value="ws" />
 	</feature>
 </widget>
 
