@@ -5,7 +5,13 @@ SECTION = "base"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRC_URI = "gitsm://github.com/iotbzh/agl-spotify-binding.git;protocol=https;branch=master"
+FILESEXTRAPATHS_append := ":${THISDIR}/${PN}"
+
+SRC_URI = " \
+	   gitsm://github.com/iotbzh/agl-spotify-binding.git;protocol=https;branch=master \
+	   file://0001-Change-bjensen-spotify-credentials.patch;patch=1 \
+	   "
+
 SRCREV  = "${AUTOREV}"
 
 inherit cmake aglwgt pkgconfig
