@@ -1,0 +1,1 @@
+AGL_APPS += "videoplayer"
