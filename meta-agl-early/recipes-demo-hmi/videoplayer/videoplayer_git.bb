@@ -18,6 +18,7 @@ DEPENDS += "sqlite3 \
             qtmultimedia \
             virtual/libhomescreen \
             qlibwindowmanager \
+			qtaglextras \
 "
 
 inherit qmake5 aglwgt
