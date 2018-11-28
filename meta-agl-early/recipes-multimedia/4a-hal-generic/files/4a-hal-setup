@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# this script will setup the appropriate HAL config files depending on what HAL has to be enabled
+HALDIR=/usr/libexec/agl/4a-hal/
+
+MYNAME=$(basename $BASH_SOURCE)
+function info() { echo "$MYNAME: $@" >&2; }
+
+set -e
+
+# create hal config dir if it doesn't exist yet
+mkdir -p $HALDIR/etc
+
+# first, disable all existing hals (remove symlinks, move files)
+rm -f $HALDIR/etc/*.json || true
+
+# enable all specified HALS on command line
+info "called with hals: $@"
+for hal in "$@"; do
+	# argument can be:
+	# - hal full filename
+	# - hal relative filename
+	# - hal abbreviation
+	for file in $hal $HALDIR/etc.available/${hal}.json $HALDIR/etc.available/hal-4a-${hal}.json; do
+		[[ -f $file ]] && {
+			cp -f $file $HALDIR/etc/
+			break
+		}
+	done
+done
+
+info "The following hals are enabled: $(cd $HALDIR/etc; ls)"
