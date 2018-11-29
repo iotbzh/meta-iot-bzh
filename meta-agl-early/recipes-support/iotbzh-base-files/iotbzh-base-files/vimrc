@@ -1,0 +1,61 @@
+set bg=dark
+
+highlight Normal guibg=Black guifg=White
+
+"set expandtab
+set autoindent 
+set tabstop=4
+set shiftwidth=4
+set smarttab
+set softtabstop=4
+set encoding=utf8
+set modeline
+set ignorecase
+
+if &t_Co > 2 || has("gui_running")
+  highlight Normal guibg=black guifg=white
+  set hlsearch
+" Make shift-insert work like in Xterm
+  map <S-Insert> <MiddleMouse>
+  map! <S-Insert> <MiddleMouse>
+endif
+
+" from http://ongardie.net/git/vim/tree/vimrc
+
+set nocompatible
+set backspace=indent,eol,start
+set ruler
+"set number
+set showmatch
+set hlsearch
+"set mouse=a
+
+if has("autocmd")
+  autocmd BufRead,BufNewFile series set syntax=config
+  autocmd BufRead,BufNewFile *.m set tabstop=2 shiftwidth=2 autoindent smartindent expandtab cinwords=if,else,elseif,for,while smarttab
+  autocmd BufRead,BufNewFile *.tex set textwidth=72
+  autocmd BufRead,BufNewFile *.c set smarttab ai smartindent
+  autocmd BufRead,BufNewFile *.cpp set smarttab ai smartindent
+  autocmd BufRead,BufNewFile *.c++ set smarttab ai smartindent
+  autocmd BufRead,BufNewFile *.js set smarttab ai smartindent
+  autocmd BufRead,BufNewFile *.py set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class tabstop=4 shiftwidth=4 smarttab expandtab softtabstop=4 autoindent
+  autocmd BufRead,BufNewFile *.hs set smartindent cinwords=if,elif,else,for,while,try,except,finally,def,class tabstop=4 shiftwidth=4 smarttab expandtab softtabstop=4 autoindent
+  autocmd BufRead,BufNewFile *.java set smartindent tabstop=4 shiftwidth=4 smarttab expandtab softtabstop=4 autoindent
+  autocmd BufRead,BufNewFile *.stx set filetype=stx2any wrap nolist linebreak spell
+  autocmd BufRead,BufNewFile *.txt set spell
+  autocmd BufRead,BufNewFile *.md set spell syntax=markdown
+  autocmd BufRead,BufNewFile *.yml set smartindent tabstop=4 shiftwidth=4 smarttab expandtab softtabstop=4 autoindent
+
+  autocmd BufReadPost *
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "normal g`\"zz" |
+    \ endif
+
+  autocmd FileType h,hpp,c,cpp,java,php,spec autocmd BufWritePre <buffer> :%s/\s\+$//e
+endif
+
+set tabpagemax=1000
+
+" enable syntax (if not already done)
+syntax on
+

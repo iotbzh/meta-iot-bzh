@@ -1,0 +1,93 @@
+test -s ~/.alias && . ~/.alias || true
+
+if [ "$PS1" ]; then
+	declare -A termcolors
+	function color {
+		echo -n "\["
+		for k in $*; do
+			case $k in
+				bold) tput bold 2>/dev/null;;
+				none) tput sgr0 2>/dev/null;;
+				*) tput setaf $k 2>/dev/null;;
+			esac
+		done
+		echo -n "\]"
+	}
+
+	termcolors[darkred]=$(color 1)
+	termcolors[darkgreen]=$(color 2)
+	termcolors[brown]=$(color 3)
+	termcolors[darkblue]=$(color 4)
+	termcolors[gray]=$(color 7)
+	termcolors[red]=$(color bold 1)
+	termcolors[green]=$(color bold 2)
+	termcolors[yellow]=$(color bold 3)
+	termcolors[blue]=$(color bold 4)
+	termcolors[magenta]=$(color bold 5)
+	termcolors[white]=$(color bold 7)
+	termcolors[none]=$(color none)
+
+	unset -f color
+
+	if [[ "$(type -t ppwd)" != "function" ]]; then
+		if [[ "$TERM" =~ xterm ]]; then
+			_tsl=$(echo -en '\e]2;')
+			_isl=$(echo -en '\e]1;')
+			_fsl=$(echo -en '\007')
+			_sc=$(tput sc 2>/dev/null)
+			_rc=$(tput rc 2>/dev/null)
+			TS1="$_sc$_tsl%s@%s:%s$_fsl$_isl%s$_fsl$_rc"
+			unset _tsl _isl _fsl _sc _rc
+			function ppwd () {
+				local dir
+				local -i width
+				test -n "$TS1" || return;
+				dir="$(dirs +0)"
+				let width=${#dir}-18
+				test ${#dir} -le 18 || dir="...${dir#$(printf "%.*s" $width "$dir")}"
+				local host
+				host=$(uname -n)
+				host=${host//.*/}
+				printf "$TS1" "$USER" "$host" "$dir" "$host"
+			}
+		else
+			function ppwd () { true; }
+		fi
+	fi
+
+	function set_bash_prompt {
+		# save rc
+		local RC=$?
+		local PROMPT_SYMBOL
+
+		mark="\$"
+		[[ "$(id -u)" -eq 0 ]] && mark="#"
+
+		if [[ $RC -eq 0 ]]; then
+			PROMPT_SYMBOL=$mark
+		elif [[ $RC -eq 127 ]]; then
+			PROMPT_SYMBOL="${termcolors[magenta]}${mark}${termcolors[none]}"
+		else
+			PROMPT_SYMBOL="${termcolors[red]}${mark}${termcolors[none]}"
+		fi
+
+		local usercol=${termcolors[blue]}
+		local hostcol=${termcolors[green]}
+		local dircol=${termcolors[yellow]}
+		[[ "$(id -u)" -eq 0 ]] && usercol=${termcolors[red]}
+
+		# Set the bash prompt variable.
+		PS1="\[\$(ppwd \l)\][$(date +%H:%M:%S)] ${usercol}\u${termcolors[none]}@${hostcol}\h${termcolors[none]}:${dircol}\w${termcolors[none]}${PROMPT_SYMBOL} "
+	}
+
+	PROMPT_COMMAND=set_bash_prompt
+
+	alias ll="ls -l"
+	alias lr="ls -ltr"
+	alias la="ls -al"
+	alias egrep='egrep --color=auto'
+	alias fgrep='fgrep --color=auto'
+	alias grep='grep --color=auto'
+	alias ip='ip --color'
+fi
+
