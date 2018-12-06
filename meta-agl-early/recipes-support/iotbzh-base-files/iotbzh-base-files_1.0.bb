@@ -18,4 +18,4 @@ do_install () {
     install -m 0644 ${WORKDIR}/vimrc ${D}${sysconfdir}/vimrc
 }
 
-RDEPENDS_${PN} = "bash vim"
+RDEPENDS_${PN} = "bash vim grep"
