@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# this script will setup the appropriate HAL config files depending on what HAL has to be enabled
+HALDIR=/usr/libexec/agl/4a-hal
+
+MYNAME=$(basename $BASH_SOURCE)
+function info() { echo "$MYNAME: $@" >&2; }
+function warning() { echo "$MYNAME: WARNING: $@" >&2; }
+function error() { echo "$MYNAME: ERROR: $@" >&2; return 1; }
+
+set -e
+
+CONFIG=${1:-$HALDIR/default_hals.conf}
+
+info "Using default config $CONFIG"
+
+[[ ! -f $CONFIG ]] && warning "Config file '$CONFIG' doesn't exist."
+
+# default values
+HAL_FALLBACK="2ch-generic-usb"
+HAL_DEFAULT=""
+HAL_AUTODETECT="yes"
+. $CONFIG || error "Invalid config file '$CONFIG'"
+
+info "Platform HALs: $HAL_DEFAULT"
+
+if [[ "$HAL_AUTODETECT" == "yes" ]]; then
+	info "Autodetecting most appropriate HAL..."
+	# TODO
+fi
+
+[[ -z "$HAL_DEFAULT" ]] && {
+	info "No hal found. Using fallback $HAL_FALLBACK"
+	HAL_DEFAULT="$HAL_FALLBACK"
+}
+
+# create hal config dir if it doesn't exist yet
+mkdir -p $HALDIR/etc
+
+# first, disable all existing hals (remove symlinks, move files)
+rm -f $HALDIR/etc/*.json || true
+
+# enable all specified HALS on command line
+info "Activating HALs: $HAL_DEFAULT"
+for hal in $HAL_DEFAULT; do
+	halfile=$HALDIR/etc.available/hal-4a-${hal}.json
+	[[ -f $halfile ]] && cp -f $halfile $HALDIR/etc/ || warning "File for HAL $hal not found"
+done
+
+info "The following hals are enabled in $HALDIR/etc:"
+pushd $HALDIR/etc >/dev/null 
+for x in *.json; do
+	info "   - $x"
+done
+popd >/dev/null
