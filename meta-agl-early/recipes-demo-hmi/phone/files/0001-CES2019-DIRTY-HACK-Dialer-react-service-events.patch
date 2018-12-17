@@ -1,0 +1,107 @@
+From 4db3e3b8a3c009f858dd2d67ee02df3d594946d7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
+Date: Fri, 14 Dec 2018 03:00:45 +0100
+Subject: [PATCH 1/1] CES2019 DIRTY HACK Dialer: react service events
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- CES2019 DIRTY HACK !!! it should be rewritten
+- react as you make a call from the UI
+
+Change-Id: If89e653bf79555ad18d288d8c11089df3efcee52
+Signed-off-by: ClÃ©ment BÃ©nier <clement.benier@iot.bzh>
+Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
+---
+ app/Dialer.qml | 32 ++++++++++++++++++++++----------
+ app/Phone.qml  |  4 ++++
+ 2 files changed, 26 insertions(+), 10 deletions(-)
+
+diff --git a/app/Dialer.qml b/app/Dialer.qml
+index 9dc91db..a6d3de4 100644
+--- a/app/Dialer.qml
++++ b/app/Dialer.qml
+@@ -24,6 +24,8 @@ import AGL.Demo.Controls 1.0
+ Item {
+     id: root
+ 
++    signal callEvent()
++
+     Connections {
+         target: phone
+ 
+@@ -46,6 +48,11 @@ Item {
+                 callStateLabel.text = "Incoming call from " + telephony.callClip
+             } else if (telephony.callState == "dialing") {
+                 callStateLabel.text = "Dialing " + telephony.callColp
++                //DIRTY HACK FOR CES2019!!! to really react to service events -- need to be rewritten
++                callButton.eventAction = true
++                callButton.checked = true
++                callButton.opacity = 1
++                root.callEvent()
+             } else if (telephony.callState == "active") {
+                 rejectButton.active = false
+             } else if (telephony.callState == "disconnected") {
+@@ -148,29 +155,34 @@ Item {
+             onImage: './images/HMI_Phone_Hangup.svg'
+             offImage: './images/HMI_Phone_Call.svg'
+             property var active: (number.text.length > 0) || (telephony.callState == "incoming") || (telephony.callState == "active")
++            property var eventAction: false
+             opacity: active ? 1 : 0.25
+ 
+             onCheckedChanged: {
+                 if (checked) {
+-                    if (!active) {
++                    //DIRTY HACK FOR CES2019!!! to really react to service events -- need to be rewritten
++                    if (!active && !eventAction) {
+                         callButton.checked = false
+-                        return
++                            return
+                     }
+ 
+                     var contact = {'name': name.text, 'number': number.text}
+                     if (contact.name === '')
+                         contact.name = 'Unknown'
+-                    if (telephony.callState == "incoming") {
+-                        telephony.answer()
+-                    } else {
+-                        pbap.search(number.text)
+-                        telephony.dial(number.text)
+-                    }
++                            if (telephony.callState == "incoming") {
++                                telephony.answer()
++                            } else {
++                                pbap.search(number.text)
++                                    telephony.dial(number.text)
++                            }
+                 } else {
+                     name.text = ''
+-                    number.text = ''
+-                    telephony.hangup()
++                        number.text = ''
++                        telephony.hangup()
++                        opacity = 0.25
+                 }
++                if(eventAction)
++                    eventAction = false
+             }
+         }
+ 
+diff --git a/app/Phone.qml b/app/Phone.qml
+index 6ce503c..9f489a1 100644
+--- a/app/Phone.qml
++++ b/app/Phone.qml
+@@ -78,6 +78,10 @@ ApplicationWindow {
+         }
+         Dialer {
+             id: dialer
++                //DIRTY HACK FOR CES2019!!! to really react to service events -- need to be rewritten
++            onCallEvent: {
++                bar.setCurrentIndex(2)
++            }
+         }
+     }
+ }
+-- 
+2.19.2
+
