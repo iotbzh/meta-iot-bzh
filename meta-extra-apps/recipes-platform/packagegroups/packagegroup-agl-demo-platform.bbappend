@@ -7,3 +7,8 @@ RDEPENDS_${PN} += " \
 
 PACKAGECONFIG_append_pn-qtlocation = " geoclue"
 
+AGL_APPS += " \
+    agl-service-generic-controller \
+    agl-service-controller-sample \
+"
+
