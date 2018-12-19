@@ -1,0 +1,33 @@
+From 92bd7e97cc8a320baedee59695f417a7cccf8bb2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
+Date: Wed, 19 Dec 2018 04:00:49 +0100
+Subject: [PATCH 1/1] hs-client: showWindow: display an app
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- other apps than oneself should be able to display apps
+
+Change-Id: I88e5bb5956addf8470ae42f9bf5305afaeeb926b
+Signed-off-by: ClÃ©ment BÃ©nier <clement.benier@iot.bzh>
+Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
+---
+ src/hs-client.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hs-client.cpp b/src/hs-client.cpp
+index e97f844..ef7a0d3 100644
+--- a/src/hs-client.cpp
++++ b/src/hs-client.cpp
+@@ -216,7 +216,7 @@ int HS_Client::showWindow(afb_req_t request, const char* appid)
+     hs_add_object_to_json_object_str( push_obj, 4, _application_id, appid, _type, __FUNCTION__);
+     const char* param = afb_req_value(request, _parameter);
+     if(param) {
+-        std::string req_appid = std::move(get_application_id(request));
++        std::string req_appid = std::move(appid);
+         if(req_appid.empty()) {
+             HMI_NOTICE("homescreen-service","can't get application identifier");
+             return AFB_REQ_GETAPPLICATIONID_ERROR;
+-- 
+2.19.2
+
