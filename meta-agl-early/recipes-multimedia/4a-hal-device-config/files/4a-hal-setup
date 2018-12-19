@@ -8,6 +8,20 @@ function info() { echo "$MYNAME: $@" >&2; }
 function warning() { echo "$MYNAME: WARNING: $@" >&2; }
 function error() { echo "$MYNAME: ERROR: $@" >&2; return 1; }
 
+function autodetect() {
+	(
+		# try to detect the greenbox
+
+		# kingfisher detection
+		. /etc/platform-info/hardware				|| return 0
+		[[ "$HW_BOARD_MODEL" =~ ^kingfisher- ]]		|| return 0
+
+		# detect MOST controller
+		[[ -n "$(lsusb -d 0424:cf30)" ]] || return 0
+
+		echo "greenbox"
+	)
+}
 set -e
 
 CONFIG=${1:-$HALDIR/default_hals.conf}
@@ -26,7 +40,7 @@ info "Platform HALs: $HAL_DEFAULT"
 
 if [[ "$HAL_AUTODETECT" == "yes" ]]; then
 	info "Autodetecting most appropriate HAL..."
-	# TODO
+	HAL_DEFAULT=$(autodetect)
 fi
 
 [[ -z "$HAL_DEFAULT" ]] && {
