@@ -1,7 +1,9 @@
 RDEPENDS_${PN} += " \
-    agl-webbrowser \ 
-    qtlocation \	
+    agl-webbrowser \
+    qtlocation \
+    qtlocation-qmlplugins \
+    qtlocation-plugins \
     "
-    
+
 PACKAGECONFIG_append_pn-qtlocation = " geoclue"
 
