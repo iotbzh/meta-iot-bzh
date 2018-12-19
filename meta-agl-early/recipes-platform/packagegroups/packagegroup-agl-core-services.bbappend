@@ -1,6 +1,5 @@
 RDEPENDS_${PN} += "\
-agl-service-alexa-voiceagent \
-agl-service-ctlapp-sample \
+agl-service-amazon-widgets \
 agl-service-voice-high \
 agl-service-voice-high-support \
     "
