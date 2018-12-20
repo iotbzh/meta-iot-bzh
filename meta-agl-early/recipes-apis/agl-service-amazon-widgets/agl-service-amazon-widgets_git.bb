@@ -9,9 +9,15 @@ SRCREV = "${AUTOREV}"
 PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
-WIDGETS_LIST = " \
-alexa-voiceagent-service \
-"
+WIDGETS_LIST = "alexa-voiceagent-service ics-alexa-app"
+
+RDEPENDS_${PN} += " \
+    qtlocation \
+    qtlocation-qmlplugins \
+    qtlocation-plugins \
+    "
+
+PACKAGECONFIG_append_pn-qtlocation = " geoclue"
 
 do_install() {
 
@@ -20,13 +26,14 @@ do_install() {
 
     set -x
     for WIDGET in ${WIDGETS_LIST}; do
+        echo ${WIDGET}
         install -m 0644 ${S}/${WIDGET}.wgt ${D}/usr/AGL/apps/autoinstall
 
 
         cat <<EOF >${WORKDIR}/10-${WIDGET}.sh
 #!/bin/sh -e
 for file in ${WIDGET}.wgt; do
-    /usr/bin/afm-install install /usr/AGL/apps/autoinstall/$file
+    /usr/bin/afm-install install /usr/AGL/apps/autoinstall/\$file
 done
 sync
 EOF
