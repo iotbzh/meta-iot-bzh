@@ -40,7 +40,8 @@ info "Platform HALs: $HAL_DEFAULT"
 
 if [[ "$HAL_AUTODETECT" == "yes" ]]; then
 	info "Autodetecting most appropriate HAL..."
-	HAL_DEFAULT=$(autodetect)
+	res=$(autodetect)
+	[[ -n "$res" ]] && HAL_DEFAULT="$res"
 fi
 
 [[ -z "$HAL_DEFAULT" ]] && {
