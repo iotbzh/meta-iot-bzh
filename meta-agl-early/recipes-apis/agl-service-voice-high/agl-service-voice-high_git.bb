@@ -11,7 +11,8 @@ inherit cmake pkgconfig aglwgt
 DEPENDS += "lua lua-native"
 RDEPENDS_${PN} += "lua"
 
-SRC_URI = "gitsm://github.com/iotbzh/agl-service-voice-high.git;protocol=https;branch=${AGL_BRANCH}"
+SRC_URI = "gitsm://github.com/iotbzh/agl-service-voice-high.git;protocol=https;branch=${AGL_BRANCH} \
+file://0001-VoiceAgentEventsHandler-handle-mic-states.patch"
 SRCREV = "${AUTOREV}"
 
 PV = "${AGLVERSION}"
