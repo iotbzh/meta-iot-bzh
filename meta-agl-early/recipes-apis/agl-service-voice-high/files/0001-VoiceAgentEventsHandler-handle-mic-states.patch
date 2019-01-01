@@ -1,4 +1,4 @@
-From f81442ec85bee23e2a1a44b62a367c551a04c8e6 Mon Sep 17 00:00:00 2001
+From e9f8be8aec5987130be8d00946096cb8b7e4977b Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
 Date: Mon, 31 Dec 2018 19:42:53 +0100
 Subject: [PATCH 1/1] VoiceAgentEventsHandler: handle mic states
@@ -32,7 +32,7 @@ index d79c222..37a7625 100644
 \ No newline at end of file
 +</widget>
 diff --git a/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp b/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
-index 4952721..754b91c 100644
+index 4952721..cb30f70 100644
 --- a/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
 +++ b/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
 @@ -13,6 +13,7 @@
@@ -89,8 +89,8 @@ index 4952721..754b91c 100644
 +            json_object_object_add(light, "blue", json_object_new_int(255));
 +            json_object_object_add(object, "mode", json_object_new_string("idle"));
 +        }
-+        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_color_scheme", color, NULL, error, info);
 +        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_mode", object, NULL, error, info);
++        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_color_scheme", color, NULL, error, info);
 +    }
      auto it = mEventsMap.find(eventNameWithVAId);
      if (it != mEventsMap.end()) {
