@@ -1,4 +1,4 @@
-From e9f8be8aec5987130be8d00946096cb8b7e4977b Mon Sep 17 00:00:00 2001
+From d1bd568605830068da4176d8dcd6a1f4baa04483 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
 Date: Mon, 31 Dec 2018 19:42:53 +0100
 Subject: [PATCH 1/1] VoiceAgentEventsHandler: handle mic states
@@ -11,8 +11,8 @@ Signed-off-by: ClÃ©ment BÃ©nier <clement.benier@iot.bzh>
 Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
 ---
  conf.d/wgt/config.xml.in                      |  3 +-
- .../src/VoiceAgentEventsHandler.cpp           | 46 +++++++++++++++++++
- 2 files changed, 48 insertions(+), 1 deletion(-)
+ .../src/VoiceAgentEventsHandler.cpp           | 55 +++++++++++++++++++
+ 2 files changed, 57 insertions(+), 1 deletion(-)
 
 diff --git a/conf.d/wgt/config.xml.in b/conf.d/wgt/config.xml.in
 index d79c222..37a7625 100644
@@ -32,7 +32,7 @@ index d79c222..37a7625 100644
 \ No newline at end of file
 +</widget>
 diff --git a/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp b/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
-index 4952721..cb30f70 100644
+index 4952721..0b44f15 100644
 --- a/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
 +++ b/src/plugins/voiceagents/src/VoiceAgentEventsHandler.cpp
 @@ -13,6 +13,7 @@
@@ -43,7 +43,30 @@ index 4952721..cb30f70 100644
  
  static string TAG = "vshl::voiceagents::VoiceAgentEventsHandler";
  static string VA_VERB_SUBSCRIBE = "subscribe";
-@@ -100,6 +101,51 @@ bool VoiceAgentEventsHandler::subscribeToVshlEventFromVoiceAgent(
+@@ -97,9 +98,63 @@ bool VoiceAgentEventsHandler::subscribeToVshlEventFromVoiceAgent(
+     return true;
+ }
+ 
++static json_object* setColor(int red, int green, int blue) {
++        json_object *color = json_object_new_object();
++        json_object *dark = json_object_new_object();
++        json_object *light = json_object_new_object();
++        json_object *cerror = json_object_new_object();
++        json_object_object_add(cerror, "red", json_object_new_int(255));
++        json_object_object_add(cerror, "green", json_object_new_int(0));
++        json_object_object_add(cerror, "blue", json_object_new_int(0));
++        json_object_object_add(light, "red", json_object_new_int(red));
++        json_object_object_add(light, "green", json_object_new_int(green));
++        json_object_object_add(light, "blue", json_object_new_int(blue));
++        json_object_object_add(dark, "red", json_object_new_int(red));
++        json_object_object_add(dark, "green", json_object_new_int(green));
++        json_object_object_add(dark, "blue", json_object_new_int(blue));
++        json_object_object_add(color, "dark", dark);
++        json_object_object_add(color, "light", light);
++        json_object_object_add(color, "error", cerror);
++        return color;
++}
++
  // IEventFilter override.
  bool VoiceAgentEventsHandler::onIncomingEvent(const string eventName, const string voiceAgentId, const string payload) {
      string eventNameWithVAId = createEventNameWithVAId(eventName, voiceAgentId);
@@ -51,46 +74,35 @@ index 4952721..cb30f70 100644
 +        struct json_object *jpayload = json_tokener_parse(json_object_get_string(json_object_new_string(payload.c_str())));
 +        std::string error, info;
 +        json_object *object = json_object_new_object(), *jstate;
-+        json_object *color = json_object_new_object();
-+        json_object *dark = json_object_new_object();
-+        json_object *light = json_object_new_object();
-+        json_object *cerror = json_object_new_object();
-+        json_object_object_add(color, "dark", dark);
-+        json_object_object_add(color, "light", light);
-+        json_object_object_add(color, "error", cerror);
-+        json_object_object_add(cerror, "red", json_object_new_int(255));
-+        json_object_object_add(cerror, "green", json_object_new_int(0));
-+        json_object_object_add(cerror, "blue", json_object_new_int(0));
-+        json_object_object_add(dark, "red", json_object_new_int(0));
-+        json_object_object_add(dark, "green", json_object_new_int(0));
-+        json_object_object_add(dark, "blue", json_object_new_int(255));
++        json_object *color = NULL;
 +
++        color = setColor(255, 255, 255);
++        json_object_object_add(object, "mode", json_object_new_string("idle"));
++        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_mode", object, NULL, error, info);
++        if(color)
++            mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_color_scheme", color, NULL, error, info);
 +
++        color = NULL;
++        object = json_object_new_object();
 +        json_object_object_get_ex(jpayload, "state", &jstate);
 +        std::string state(json_object_get_string(jstate));
 +        if(state == "LISTENING") {
-+            json_object_object_add(light, "red", json_object_new_int(0));
-+            json_object_object_add(light, "green", json_object_new_int(255));
-+            json_object_object_add(light, "blue", json_object_new_int(0));
-+            json_object_object_add(object, "mode", json_object_new_string("listening"));
++            color = setColor(0, 0, 255);
++            json_object_object_add(object, "mode", json_object_new_string("processing"));
 +        } else if(state == "THINKING") {
-+            json_object_object_add(light, "red", json_object_new_int(0));
-+            json_object_object_add(light, "green", json_object_new_int(255));
-+            json_object_object_add(light, "blue", json_object_new_int(130));
++            color = setColor(0, 255, 0);
 +            json_object_object_add(object, "mode", json_object_new_string("processing"));
 +        } else if(state == "SPEAKING") {
-+            json_object_object_add(light, "red", json_object_new_int(0));
-+            json_object_object_add(light, "green", json_object_new_int(130));
-+            json_object_object_add(light, "blue", json_object_new_int(130));
++            color = setColor(255, 255, 0);
 +            json_object_object_add(object, "mode", json_object_new_string("processing"));
 +        } else {
-+            json_object_object_add(light, "red", json_object_new_int(0));
-+            json_object_object_add(light, "green", json_object_new_int(0));
-+            json_object_object_add(light, "blue", json_object_new_int(255));
++            color = setColor(255, 255, 255);
 +            json_object_object_add(object, "mode", json_object_new_string("idle"));
 +        }
++
 +        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_mode", object, NULL, error, info);
-+        mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_color_scheme", color, NULL, error, info);
++        if(color)
++            mAfbApi->callSync("4a-hal-rcar-m3kf-unicens", "set_md_mic_color_scheme", color, NULL, error, info);
 +    }
      auto it = mEventsMap.find(eventNameWithVAId);
      if (it != mEventsMap.end()) {
