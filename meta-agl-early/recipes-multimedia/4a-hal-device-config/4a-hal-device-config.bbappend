@@ -7,6 +7,7 @@ RDEPENDS_${PN} = "bash"
 
 SRC_URI += "\
 	file://4a-hal-setup \
+	file://0001-hal-4a-rcar-m3-use-same-API-name-as-hal-greenbox.patch \
 "
 
 do_install_append () {

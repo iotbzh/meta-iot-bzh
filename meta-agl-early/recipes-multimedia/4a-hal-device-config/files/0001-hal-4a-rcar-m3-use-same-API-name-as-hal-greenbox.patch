@@ -1,0 +1,41 @@
+From ad355e938259eff701537d5f82074a38fc5ed5f1 Mon Sep 17 00:00:00 2001
+From: Stephane Desneux <stephane.desneux@iot.bzh>
+Date: Fri, 4 Jan 2019 11:46:54 +0100
+Subject: [PATCH] hal-4a-rcar-m3*: use same API name as hal-greenbox
+
+Change-Id: Ia4ba17547767a692d3cb36b3332778485eca5f53
+Signed-off-by: Stephane Desneux <stephane.desneux@iot.bzh>
+---
+ reference-boards/hal-4a-rcar-m3.json   | 2 +-
+ reference-boards/hal-4a-rcar-m3kf.json | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/reference-boards/hal-4a-rcar-m3.json b/reference-boards/hal-4a-rcar-m3.json
+index 5df9bd6..e8dd498 100644
+--- a/reference-boards/hal-4a-rcar-m3.json
++++ b/reference-boards/hal-4a-rcar-m3.json
+@@ -3,7 +3,7 @@
+     "metadata": {
+         "uid": "/dev/snd/by-path/platform-sound",
+         "version": "0.9",
+-        "api": "4a-hal-rcar-m3",
++        "api": "4a-hal-rcar-m3kf-unicens",
+         "require": [ "alsacore", "smixer" ],
+         "info": "4a hal for Rcar M3 device",
+         "author": "Jonathan Aillet",
+diff --git a/reference-boards/hal-4a-rcar-m3kf.json b/reference-boards/hal-4a-rcar-m3kf.json
+index ca9ac77..8e2498c 100644
+--- a/reference-boards/hal-4a-rcar-m3kf.json
++++ b/reference-boards/hal-4a-rcar-m3kf.json
+@@ -3,7 +3,7 @@
+     "metadata": {
+         "uid": "/dev/snd/by-path/platform-sound@1",
+         "version": "0.9",
+-        "api": "4a-hal-rcar-m3kf",
++        "api": "4a-hal-rcar-m3kf-unicens",
+         "require": [ "alsacore", "smixer" ],
+         "info": "4a hal for Rcar M3 device when plugged on Kingfisher board",
+         "author": "Jonathan Aillet, Stephane Desneux",
+-- 
+2.16.4
+
