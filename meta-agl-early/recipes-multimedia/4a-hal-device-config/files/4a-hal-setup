@@ -13,13 +13,25 @@ function autodetect() {
 		# try to detect the greenbox
 
 		# kingfisher detection
-		. /etc/platform-info/hardware				|| return 0
-		[[ "$HW_BOARD_MODEL" =~ ^kingfisher- ]]		|| return 0
+		. /etc/platform-info/hardware			|| return 0
 
-		# detect MOST controller
-		[[ -n "$(lsusb -d 0424:cf30)" ]] || return 0
-
-		echo "greenbox"
+		if [[ "$HW_SOC_FAMILY" =~ "R-Car Gen3" ]]; then
+			info "autodetect(): found SOC family $HW_SOC_FAMILY"
+			if [[ "$HW_BOARD_MODEL" =~ ^kingfisher- ]]; then
+				info "autodetect(): found Kingfisher board"
+				# detect MOST controller
+				if [[ -n "$(lsusb -d 0424:cf30)" ]]; then 
+					info "autodetect(): found USB MOST controller"
+					echo "greenbox"
+				else
+					echo "rcar-m3kf"
+				fi
+			else
+				echo "rcar-m3"
+			fi
+		#else
+		#handle other boards
+		fi
 	)
 }
 set -e
