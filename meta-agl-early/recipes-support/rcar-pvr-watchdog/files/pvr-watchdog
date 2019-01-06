@@ -1,0 +1,29 @@
+#!/bin/bash
+
+LIMIT=175
+
+MYNAME=$(basename $BASH_SOURCE)
+
+function info() {
+	echo "$@" >&2
+}
+
+[[ -d /sys/module/pvrsrvkm/ ]] || { info "No PVR driver found. Automatic reboot disabled"; exit 0; }
+
+[[ -f /usr/lib/libpvrWAYLAND_WSEGL.so ]] || { info "No GLES user module found. Automatic reboot disabled."; exit 0; }
+
+lsof /usr/lib/libpvrWAYLAND_WSEGL.so >/dev/null 2>&1
+[[ $? -eq 0 ]] || { info "GLES user module not in use. Automatic reboot disabled."; exit 0; }
+
+uptime=$(awk '{printf("%d\n",$1/60);}' </proc/uptime)
+
+if [[ "$uptime" -gt $LIMIT ]]; then
+	info "Limit ($LIMIT minutes) reached: it's time to reboot!"
+	[[ -z "$DRYRUN" ]] && reboot -f
+else
+	info "$(( LIMIT - uptime )) minutes left before reboot."
+fi
+
+exit 0
+
+

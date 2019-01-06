@@ -1,0 +1,9 @@
+[Unit]
+Description=Run pvr-watchdog every minute
+
+[Timer]
+OnCalendar=minutely
+
+[Install]
+WantedBy=basic.target
+
