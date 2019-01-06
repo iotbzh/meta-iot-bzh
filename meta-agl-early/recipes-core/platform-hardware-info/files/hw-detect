@@ -197,5 +197,8 @@ function __generate_output() {
 	done | out_object $fmt
 }
 __generate_output bash >$shout
+chsmack -A $shout
 __generate_output json >$jsonout
+chsmack -A $jsonout
+
 
