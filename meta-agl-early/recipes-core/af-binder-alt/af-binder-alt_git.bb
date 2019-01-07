@@ -53,7 +53,13 @@ for svc in \
 	; do
     for x in $srcdir/afm-*-$svc--*@.service; do
         echo "TO BE REMOVED AFTER CES19 - SPEC-2089: using alternate afb-daemon for $x"
+
+		# use alternate daemon (before sync call fixes)
         sed -i -e 's|/usr/bin/afb-daemon|/alt/bin/afb-daemon|g' $x
+
+		# wait for weston to be ready
+		sed -i '/\[Unit\]/ a After=weston-ready.service' $x
+		sed -i '/\[Unit\]/ a Requires=weston-ready.service' $x
     done
 done
 EOF
