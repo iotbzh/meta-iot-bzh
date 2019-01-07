@@ -39,6 +39,7 @@ detect_renesas() {
 		r8a7778)			keys[soc_name]="M1A"  ;;
 		r8a7791)			keys[soc_name]="M2-W" ;;
 		r8a7793)			keys[soc_name]="M2-N" ;;
+		r8a7796)			keys[soc_name]="M3"   ;;
 		r8a77960)			keys[soc_name]="M3-W" ;;
 		r8a77965)			keys[soc_name]="M3-N" ;;
 		r8a7794)			keys[soc_name]="E2"   ;;
