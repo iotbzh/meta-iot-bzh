@@ -6,7 +6,6 @@ SECTION = "apps"
 SRC_URI = "git://github.com/iotbzh/alexa-widgets.git;protocol=https;branch=master"
 SRCREV = "${AUTOREV}"
 
-PV = "${AGLVERSION}"
 S  = "${WORKDIR}/git"
 
 WIDGETS_LIST = "alexa-voiceagent-service ics-alexa-app"
