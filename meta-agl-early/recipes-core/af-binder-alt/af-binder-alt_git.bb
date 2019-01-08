@@ -62,6 +62,16 @@ for svc in \
 		sed -i '/\[Unit\]/ a Requires=weston-ready.service' $x
     done
 done
+
+for svc in \
+	appli-homescreen \
+	appli-launcher \
+	; do
+    for x in $srcdir/afm-*-$svc--*@.service; do
+        echo "TO BE REMOVED AFTER CES19"
+		sed -i '/\[Service\]/ a Restart=always' $x
+	done
+done
 EOF
 	chmod a+x ${D}/${sysconfdir}/agl-postinsts/99_af-binder-alt.sh
 }
