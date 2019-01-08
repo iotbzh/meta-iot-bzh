@@ -3,7 +3,7 @@
 # Signed-off-by: Stephane Desneux <stephane.desneux@iot.bzh>
 
 # time from script startup
-LIMIT=90
+LIMIT=180
 ts0=0
 function ts() { echo $(( $(date +%s) - ts0 )); }
 ts0=$(ts)
@@ -23,7 +23,7 @@ function waitloop() {
 
 	# check that we have at least one controller
 	HCIDEV=
-	while havetime 60; do
+	while havetime 120; do
 		echo "detecting hci devices..."
 		for x in $(ls /sys/class/bluetooth/hci* 2>/dev/null); do
 			[[ -z "$HCIDEV" ]] && HCIDEV=$(basename $x)
@@ -34,7 +34,7 @@ function waitloop() {
 		}
 		sleep 0.2
 	done
-	havetime 60 || { echo "TIMEOUT REACHED"; return 1; }
+	havetime 120 || { echo "TIMEOUT REACHED"; return 1; }
 
 	# wait for controller to be up and running
 	while havetime; do
