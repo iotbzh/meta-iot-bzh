@@ -1,6 +1,7 @@
 RDEPENDS_${PN} += "\
 	iotbzh-base-files \
 	platform-hardware-info \
+	fix-startup-sequence \
 "
 
 # only for rcar platforms

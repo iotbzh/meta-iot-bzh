@@ -47,30 +47,16 @@ do_install_append() {
 	install -d ${D}${sysconfdir}/agl-postinsts
 	cat <<'EOF' >>${D}/${sysconfdir}/agl-postinsts/99_af-binder-alt.sh
 srcdir=/var/local/lib/systemd/system/
+
+logger -t $(basename $BASH_SOURCE) "WORKAROUND!!! HOT PATCH ON HOMESCREEN AND WINDOWMANAGER"
 for svc in \
 	windowmanager-service \
 	homescreen-service \
 	; do
     for x in $srcdir/afm-*-$svc--*@.service; do
-        echo "TO BE REMOVED AFTER CES19 - SPEC-2089: using alternate afb-daemon for $x"
-
 		# use alternate daemon (before sync call fixes)
         sed -i -e 's|/usr/bin/afb-daemon|/alt/bin/afb-daemon|g' $x
-
-		# wait for weston to be ready
-		sed -i '/\[Unit\]/ a After=weston-ready.service' $x
-		sed -i '/\[Unit\]/ a Requires=weston-ready.service' $x
     done
-done
-
-for svc in \
-	appli-homescreen \
-	appli-launcher \
-	; do
-    for x in $srcdir/afm-*-$svc--*@.service; do
-        echo "TO BE REMOVED AFTER CES19"
-		sed -i '/\[Service\]/ a Restart=always' $x
-	done
 done
 EOF
 	chmod a+x ${D}/${sysconfdir}/agl-postinsts/99_af-binder-alt.sh
