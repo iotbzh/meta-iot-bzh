@@ -1,29 +1,23 @@
-From 6604a2fe78cb5a39cf902fb4e8c9fa2b6ea92695 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
-Date: Thu, 13 Dec 2018 02:20:29 +0100
-Subject: [PATCH] telephony-binding: handle vshl interface
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From b936f0a0918fe84f4925820d9a7c309ac6451720 Mon Sep 17 00:00:00 2001
+From: Thierry Bultel <thierry.bultel@iot.bzh>
+Date: Fri, 15 Feb 2019 09:44:46 +0100
+Subject: [PATCH 1/1] telephony-binding: handle vshl interface
 
 - subscribe to vhsl controlphone
 - parse event
 
-Change-Id: I3be9a5a8c8e95516468e2f45c269ae0393f9df25
-Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
-Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
+Signed-off-by: Thierry Bultel <thierry.bultel@iot.bzh>
 ---
- binding/telephony-binding.c | 122 ++++++++++++++++++++++++++++++++++++++++++++
- conf.d/wgt/config.xml.in    |   1 +
- 2 files changed, 123 insertions(+)
+ binding/telephony-binding.c | 123 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 123 insertions(+)
 
 diff --git a/binding/telephony-binding.c b/binding/telephony-binding.c
-index 50d3638..8597add 100644
+index a013196..24679fd 100644
 --- a/binding/telephony-binding.c
 +++ b/binding/telephony-binding.c
 @@ -29,6 +29,8 @@
  
- #define HFP_UUID	"0000111f-0000-1000-8000-00805f9b34fb"
+ #define OFONO_MODEM_INTERFACE	"org.ofono.Modem"
  
 +#define VSHLAPI "vshlsupport"
 +
@@ -46,7 +40,7 @@ index 50d3638..8597add 100644
  	struct json_object *call_info;
  
  	call_info = json_object_new_object();
-@@ -325,19 +329,54 @@ static const afb_verb_t verbs[]= {
+@@ -325,15 +329,134 @@ static const afb_verb_t verbs[]= {
  	{ }
  };
  
@@ -71,6 +65,7 @@ index 50d3638..8597add 100644
  	return ofono_init(api);
  }
  
++
 +static void notify_connection_state_change(afb_api_t api, const char* callId, const char* callState) {
 +	struct json_object *response = json_object_new_object();
 +	struct json_object *payload_response = json_object_new_object();
@@ -85,26 +80,6 @@ index 50d3638..8597add 100644
 +	afb_api_call_sync(api, VSHLAPI, "phonecontrol/publish", response, NULL, NULL, NULL);
 +}
 +
- static void process_connection_event(afb_api_t api, struct json_object *object)
- {
- 	struct json_object *val = NULL, *props = NULL;
- 	const char *action, *address;
- 	int connected = 0;
- 
-+	if (!object) {
-+		AFB_ERROR("process_connection_event: invalid args object");
-+		return;
-+	}
-+
-+	AFB_NOTICE("process_connection_event ...%s", json_object_get_string(object));
-+
- 	json_object_object_get_ex(object, "action", &val);
- 	if (!val)
- 		return;
-@@ -373,10 +412,93 @@ static void process_connection_event(afb_api_t api, struct json_object *object)
- 	}
- }
- 
 +static void process_phonecontrol_event(afb_api_t api, struct json_object *obj)
 +{
 +    AFB_NOTICE("process_phonecontrol_event ...%s", json_object_get_string(obj));
@@ -183,30 +158,23 @@ index 50d3638..8597add 100644
 +	}
 +}
 +
- static void onevent(afb_api_t api, const char *event, struct json_object *object)
- {
++static void onevent(afb_api_t api, const char *event, struct json_object *object)
++{
 +	AFB_DEBUG("Telephony: onevent: %s", event);
- 	if (!g_ascii_strcasecmp(event, "Bluetooth-Manager/device_changes"))
- 		process_connection_event(api, object);
-+	else if (!g_ascii_strcasecmp(event, "vshlsupport/dial"))
++	if (!g_ascii_strcasecmp(event, "vshlsupport/dial"))
 +		process_phonecontrol_event(api, object);
 +	else if (!g_ascii_strcasecmp(event, "vshlsupport/stop"))
 +		process_phonecontrol_hangup(api, object);
- 	else
- 		AFB_ERROR("Unsupported event: %s\n", event);
- }
-diff --git a/conf.d/wgt/config.xml.in b/conf.d/wgt/config.xml.in
-index 1c8b8f2..89956be 100644
---- a/conf.d/wgt/config.xml.in
-+++ b/conf.d/wgt/config.xml.in
-@@ -19,6 +19,7 @@
- 
- 	<feature name="urn:AGL:widget:required-api">
- 		<param name="Bluetooth-Manager" value="ws" />
-+		<param name="vshlsupport" value="ws" />
- 	</feature>
- 
- 	<feature name="urn:AGL:widget:required-binding">
++	else
++		AFB_ERROR("Unsupported event: %s\n", event);
++}
++
+ const afb_binding_t afbBindingV3 = {
+ 	.api = "telephony",
+ 	.verbs = verbs,
+ 	.init = init,
++	.onevent = onevent,
+ };
 -- 
-2.7.4
+2.16.4
 
