@@ -1,5 +1,5 @@
 SUMMARY     = "agl-service-voice-high"
-DESCRIPTION = "AGL High Level Voice servic "
+DESCRIPTION = "AGL High Level Voice service"
 HOMEPAGE    = "https://git.automotivelinux.org/apps/agl-service-voice-high"
 SECTION     = "apps"
 
@@ -15,6 +15,6 @@ SRC_URI = "gitsm://github.com/iotbzh/agl-service-voice-high.git;protocol=https;b
 file://0001-VoiceAgentEventsHandler-handle-mic-states.patch"
 SRCREV = "${AUTOREV}"
 
-PV = "${AGLVERSION}"
+PV = "0.1+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
