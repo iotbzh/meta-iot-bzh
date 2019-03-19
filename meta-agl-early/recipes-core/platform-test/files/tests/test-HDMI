@@ -1,0 +1,35 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG="HDMI devices detection"
+
+case $HW_BOARD_MODEL in 
+	kingfisher-?3ulcb-*)
+		HDMI_DEVICES="HDMI-A-1 HDMI-A-2 LVDS-1"
+		;;
+	?3ulcb-*)
+		HDMI_DEVICES="HDMI-A-1"
+		;;
+	*)
+		HDMI_DEVICES=""
+		;;
+esac
+
+for dev in $HDMI_DEVICES
+do
+	for state in /sys/class/drm/card*-${dev}/status; do
+		RET="doesn't exist"
+		[[ -f $state ]] && RET=$(cat $state 2>/dev/null)
+
+		case $RET in 
+			connected|disconnected)
+				pass "$TEST_MSG - $dev $RET"
+				;;
+			*)
+				fail "$TEST_MSG - $dev has unknown state ($RET)"
+				;;
+		esac
+	done
+done

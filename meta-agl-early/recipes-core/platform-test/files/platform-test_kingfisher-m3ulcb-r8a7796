@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for t in BT_HCI CAN Ethernet GPS HDMI IIO Radio USB Wifi; do
+	script=tests/test-$t
+	bash -e $script || echo "FAIL: invalid test script $script"
+done
+

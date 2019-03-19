@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG="IIO Devices IMU (9DOF) detection"
+
+case $HW_BOARD_MODEL in 
+	kingfisher-?3ulcb-*)
+		IIO_DEVICES=/sys/bus/iio/devices/iio:device*/*_raw
+		;;
+	*)
+		IIO_DEVICES=
+		;;
+esac
+
+IIO_DUMP_FILE=/tmp/iio-dump-test.log
+
+DEVFOUND=
+
+rm -f $IIO_DUMP_FILE
+for dev in $IIO_DEVICES; do
+	[[ -e $dev ]] && {
+		echo "$(basename $dev): $(cat $dev)" &>> ${IIO_DUMP_FILE}
+		DEVFOUND="${DEVFOUND} $(basename $dev _raw)"
+	}
+done
+
+[[ -s $IIO_DUMP_FILE ]] &&
+	pass "${TEST_MSG} - Found:$DEVFOUND" ||
+	fail ${TEST_MSG}

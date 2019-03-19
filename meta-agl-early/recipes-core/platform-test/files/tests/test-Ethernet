@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG="Ethernet device detection"
+
+for dev in ${HW_ETHERNET_DEVICES}
+do
+	ip link show dev ${dev} &> /dev/null
+	[ $? -eq 0 ] && pass ${TEST_MSG} $dev || fail ${TEST_MSG} $dev
+done

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG_DETECT="HCI BT device detection"
+TEST_MSG_CONFIG="HCI BT device config"
+
+### NOTE: we don't detect if first controller is on kingfisher or a USB dongle...
+### it could be done using: hciconfig hci0 | head -1 | awk -F "Bus: " '{print $2;}' => 'USB'
+
+case $HW_BOARD_MODEL in 
+	kingfisher-?3ulcb-*)
+		EXPECTED_DEVICES="hci0"
+		;;
+	*)
+		EXPECTED_DEVICES=""
+		;;
+esac
+
+[[ "$HW_BLUETOOTH_DEVICES" == "$EXPECTED_DEVICES" ]] && 
+	pass "${TEST_MSG_DETECT} - '$HW_BLUETOOTH_DEVICES'" || 
+	fail "${TEST_MSG_DETECT} - '$HW_BLUETOOTH_DEVICES' but expected '$EXPECTED_DEVICES'" 
+
+for dev in ${HW_BLUETOOTH_DEVICES}; do
+	hciconfig $dev &>/dev/null && pass "${TEST_MSG_CONFIG} - $dev" || fail "${TEST_MSG_CONFIG} - $dev"
+done

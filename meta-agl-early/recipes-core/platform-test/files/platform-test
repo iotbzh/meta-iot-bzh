@@ -1,0 +1,30 @@
+#!/bin/bash
+
+BASEDIR=/usr/share/platform-test
+
+function info() { echo "$@" >&2; }
+
+if [[ $# -gt 0 ]]; then
+	case $1 in
+		-d|--detect)
+			info "Running hardware detection" 
+			/usr/libexec/platform-hardware-info/hw-detect
+			;;
+		-h|--help|*)
+			info "$0 [-h|--help] [-d|--detect]"
+			exit 1
+			;;
+	esac 
+fi
+
+# source hw definitions
+. /etc/platform-info/hardware
+
+cd $BASEDIR
+
+[[ ! -f platform-test_${HW_BOARD_MODEL} ]] && {
+	info "platform-test: Unknown board model"
+	exit 1
+}
+
+exec bash -e platform-test_${HW_BOARD_MODEL}

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for t in Ethernet HDMI USB; do
+	script=tests/test-$t
+	bash -e $script || echo "FAIL: invalid test script $script"
+done
+

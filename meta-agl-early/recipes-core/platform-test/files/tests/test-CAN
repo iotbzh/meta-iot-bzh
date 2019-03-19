@@ -1,0 +1,26 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG_DETECT="CAN device detection"
+TEST_MSG_CONFIG="CAN device config"
+
+case $HW_BOARD_MODEL in 
+	kingfisher-?3ulcb-*)
+		EXPECTED_DEVICES="can0 can1"
+		;;
+	*)
+		EXPECTED_DEVICES=""
+		;;
+esac
+
+[[ "$HW_CAN_DEVICES" == "$EXPECTED_DEVICES" ]] && 
+	pass "${TEST_MSG_DETECT} - '$HW_CAN_DEVICES'" || 
+	fail "${TEST_MSG_DETECT} - '$HW_CAN_DEVICES' but expected '$EXPECTED_DEVICES'" 
+
+for dev in ${HW_CAN_DEVICES}
+do
+	ip link show dev ${dev} &>/dev/null
+	[ $? -eq 0 ] && pass "${TEST_MSG_CONFIG} - $dev" || fail "${TEST_MSG_CONFIG} - $dev"
+done

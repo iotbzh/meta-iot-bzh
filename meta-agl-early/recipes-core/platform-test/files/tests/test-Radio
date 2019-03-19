@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG="Radio device detection"
+
+RADIO_DEV=$(arecord -l | grep "radio")
+
+if [ "${RADIO_DEV}" ]
+then
+	pass ${TEST_MSG}
+else
+	fail ${TEST_MSG}
+fi

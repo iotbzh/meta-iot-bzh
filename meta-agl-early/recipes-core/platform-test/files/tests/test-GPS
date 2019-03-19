@@ -1,0 +1,44 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_DEV_PRESENCE_MSG="GPS device detection"
+TEST_DUMP_DEVICE_MSG="GPS dump test"
+
+DEV_DETECTED=
+
+test_dev_presence() {
+	ls ${1} &> /dev/null
+	[[ $? -eq 0 ]] &&
+		{ DEV_DETECTED=$1; pass "${TEST_DEV_PRESENCE_MSG} - $1"; } ||
+		fail "${TEST_DEV_PRESENCE_MSG} - $1 not present"
+}
+
+test_dump_device() {
+	GPS_DUMP_FILE=/tmp/gps-dump-test.log
+	cat ${1} &> ${GPS_DUMP_FILE} &
+	DUMP_PID=$!
+	sleep 1
+	kill ${DUMP_PID}
+	[[ -s ${GPS_DUMP_FILE} ]] && 
+		pass ${TEST_DUMP_DEVICE_MSG} ||
+		fail ${TEST_DUMP_DEVICE_MSG}
+}
+
+case $HW_BOARD_MODEL in 
+	kingfisher*)
+		GPS_DEVICE=/dev/ttySC2
+		;;
+	*)
+		GPS_DEVICE=unknown
+		;;
+esac
+
+test_dev_presence $GPS_DEVICE
+if [[ -n "$DEV_DETECTED" ]]; then
+	test_dump_device $DEV_DETECTED
+else
+	skip ${TEST_DUMP_DEVICE_MSG}
+fi
+

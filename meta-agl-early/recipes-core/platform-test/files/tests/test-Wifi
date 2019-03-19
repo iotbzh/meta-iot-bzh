@@ -1,0 +1,43 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_ENABLE_WIFI_MSG="Wifi enable device"
+TEST_SCAN_WIFI_MSG="Wifi scan available networks"
+TEST_SERVICES_MSG="Wifi services"
+
+# Ensuring that wifi is disable to avoid error message that it was already enable
+connmanctl disable wifi &> /dev/null
+
+RET=$(connmanctl enable wifi)
+if [ $? -eq 0 ] && [ ! "$(echo $RET | awk '{print $1}')" = "Error" ]
+then
+	pass $TEST_ENABLE_WIFI_MSG
+else
+	fail $TEST_ENABLE_WIFI_MSG
+	skip $TEST_SCAN_WIFI_MSG
+	skip $TEST_SERVICES_MSG
+	exit 1
+fi
+
+sleep 1
+RET=$(connmanctl scan wifi)
+if [ $? -eq 0 ] && [ ! "$(echo $RET | awk '{print $1}')" = "Error" ]
+then
+	pass $TEST_SCAN_WIFI_MSG
+else
+	fail $TEST_SCAN_WIFI_MSG
+	skip $TEST_SERVICES_MSG
+	exit 2
+fi
+
+RET=$(connmanctl services)
+if [ $? -eq 0 ] && [ ! "$(echo $RET | awk '{print $1}')" = "Error" ]
+then
+	pass $TEST_SERVICES_MSG
+else
+	fail $TEST_SERVICES_MSG
+	exit 3
+fi
+

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+. ${SCRIPT_DIR}/common.sh
+
+TEST_MSG="USB bus detection"
+
+case $HW_BOARD_MODEL in 
+	kingfisher-?3ulcb-*)
+		USB_DEVICES="1 2"
+		;;
+	?3ulcb-*)
+		USB_DEVICES="1"
+		;;
+	*)
+		USB_DEVICES="1"
+		;;
+esac
+
+for dev in $USB_DEVICES
+do
+	RET=$(lsusb -s ${dev}:)
+	if [ "${RET}" ]
+	then
+		pass ${TEST_MSG} $dev
+	else
+		fail ${TEST_MSG} $dev
+	fi
+done
