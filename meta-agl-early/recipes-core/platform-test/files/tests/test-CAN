@@ -8,7 +8,7 @@ TEST_MSG_CONFIG="CAN device config"
 
 case $HW_BOARD_MODEL in 
 	kingfisher-?3ulcb-*)
-		EXPECTED_DEVICES="can0 can1"
+		EXPECTED_DEVICES="can0 can1 sllin0"
 		;;
 	*)
 		EXPECTED_DEVICES=""
