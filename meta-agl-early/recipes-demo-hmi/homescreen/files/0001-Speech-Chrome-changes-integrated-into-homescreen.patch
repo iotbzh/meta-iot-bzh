@@ -1,16 +1,11 @@
-From 276aff8f92f2d6e376629096b4f106f340d64238 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Cl=C3=A9ment=20B=C3=A9nier?= <clement.benier@iot.bzh>
-Date: Mon, 31 Dec 2018 16:20:48 +0100
-Subject: [PATCH 1/1] Speech-Chrome-changes-integrated-into-homescreen
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From 274ae2da5a176b525dacad84ce6ad706abb5640d Mon Sep 17 00:00:00 2001
+From: Thierry Bultel <thierry.bultel@iot.bzh>
+Date: Thu, 21 Mar 2019 16:22:44 +0100
+Subject: [PATCH] Speech-Chrome-changes-integrated-into-homescreen
 
-Change-Id: I1e2eecfdab463518c275a928bb9130f23c2bbf03
-Signed-off-by: ClÃ©ment BÃ©nier <clement.benier@iot.bzh>
-Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
+Signed-off-by: Thierry Bultel <thierry.bultel@iot.bzh>
 ---
- homescreen/homescreen.pro                     |  10 +-
+ homescreen/homescreen.pro                     |  12 +-
  homescreen/qml/SpeechChrome.qml               | 112 ++++++++++++++
  .../qml/images/SpeechChrome/speechchrome.qrc  |   6 +
  homescreen/qml/main.qml                       |   9 +-
@@ -22,7 +17,7 @@ Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
  homescreen/src/constants.h                    |  40 +++++
  homescreen/src/main.cpp                       |   4 +
  package/config.xml                            |   1 +
- 12 files changed, 480 insertions(+), 3 deletions(-)
+ 12 files changed, 481 insertions(+), 4 deletions(-)
  create mode 100644 homescreen/qml/SpeechChrome.qml
  create mode 100644 homescreen/qml/images/SpeechChrome/speechchrome.qrc
  create mode 100755 homescreen/src/aglsocketwrapper.cpp
@@ -32,38 +27,38 @@ Signed-off-by: Clément Bénier <clement.benier@iot.bzh>
  create mode 100644 homescreen/src/constants.h
 
 diff --git a/homescreen/homescreen.pro b/homescreen/homescreen.pro
-index 3a25880..a3511eb 100644
+index 8baa90d..449000d 100644
 --- a/homescreen/homescreen.pro
 +++ b/homescreen/homescreen.pro
-@@ -31,7 +31,9 @@ SOURCES += \
+@@ -30,14 +30,19 @@ SOURCES += \
+     src/statusbarserver.cpp \
      src/applicationlauncher.cpp \
      src/mastervolume.cpp \
-     src/homescreenhandler.cpp \
--    helpers/qafbwebsocketclient.cpp
+-    src/homescreenhandler.cpp
++    src/homescreenhandler.cpp \
 +    src/aglsocketwrapper.cpp \
-+    src/chromecontroller.cpp \
-+    helpers/qafbwebsocketclient.cpp \
++    src/chromecontroller.cpp
  
  HEADERS  += \
      src/statusbarmodel.h \
-@@ -39,6 +41,9 @@ HEADERS  += \
+     src/statusbarserver.h \
      src/applicationlauncher.h \
      src/mastervolume.h \
-     src/homescreenhandler.h \
+-    src/homescreenhandler.h
++    src/homescreenhandler.h \
 +    src/aglsocketwrapper.h \
 +    src/chromecontroller.h \
-+    src/constants.h \
-     helpers/qafbwebsocketclient.h
++    src/constants.h
  
  OTHER_FILES += \
-@@ -51,4 +56,5 @@ RESOURCES += \
+     README.md
+@@ -49,4 +54,5 @@ RESOURCES += \
      qml/images/Shortcut/shortcut.qrc \
      qml/images/Status/status.qrc \
      qml/images/images.qrc \
 -    qml/qml.qrc
 +    qml/qml.qrc \
 +    qml/images/SpeechChrome/speechchrome.qrc
-\ No newline at end of file
 diff --git a/homescreen/qml/SpeechChrome.qml b/homescreen/qml/SpeechChrome.qml
 new file mode 100644
 index 0000000..aba8283
