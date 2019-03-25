@@ -1,9 +1,9 @@
-From 274ae2da5a176b525dacad84ce6ad706abb5640d Mon Sep 17 00:00:00 2001
-From: Thierry Bultel <thierry.bultel@iot.bzh>
-Date: Thu, 21 Mar 2019 16:22:44 +0100
+From d785ca6b87f70e3f68cd5da5119df7717b095450 Mon Sep 17 00:00:00 2001
+From: Pierre MARZIN <pierre.marzin@iot.bzh>
+Date: Mon, 25 Mar 2019 15:28:49 +0100
 Subject: [PATCH] Speech-Chrome-changes-integrated-into-homescreen
 
-Signed-off-by: Thierry Bultel <thierry.bultel@iot.bzh>
+Signed-off-by: Pierre MARZIN <pierre.marzin@iot.bzh>
 ---
  homescreen/homescreen.pro                     |  12 +-
  homescreen/qml/SpeechChrome.qml               | 112 ++++++++++++++
@@ -598,7 +598,7 @@ index 0000000..2c04623
 +
 +#endif // CONSTANTS_H
 diff --git a/homescreen/src/main.cpp b/homescreen/src/main.cpp
-index 939577f..078023a 100644
+index 5f283fb..5c819f9 100644
 --- a/homescreen/src/main.cpp
 +++ b/homescreen/src/main.cpp
 @@ -32,6 +32,7 @@
@@ -621,7 +621,7 @@ index 939577f..078023a 100644
 @@ -140,6 +143,7 @@ int main(int argc, char *argv[])
      engine.rootContext()->setContextProperty("launcher", launcher);
      engine.rootContext()->setContextProperty("weather", new Weather(bindingAddress));
-     engine.rootContext()->setContextProperty("bluetooth", new Bluetooth(bindingAddress));
+     engine.rootContext()->setContextProperty("bluetooth", new Bluetooth(bindingAddress, engine.rootContext()));
 +    engine.rootContext()->setContextProperty("speechChromeController", new ChromeController(bindingAddress, &engine));
      engine.rootContext()->setContextProperty("screenInfo", &screenInfo);
      engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
@@ -639,5 +639,5 @@ index a15baee..5d61aac 100644
    <feature name="urn:AGL:widget:required-permission">
      <param name="urn:AGL:permission::public:no-htdocs" value="required" />
 -- 
-2.20.1
+2.17.1
 
