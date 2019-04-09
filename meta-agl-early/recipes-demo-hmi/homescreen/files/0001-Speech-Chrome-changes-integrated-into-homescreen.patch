@@ -634,7 +634,7 @@ index a15baee..5d61aac 100644
      <param name="Bluetooth-Manager" value="ws" />
      <param name="windowmanager" value="ws" />
      <param name="ahl-4a" value="ws" />
-+    <param name="vshl" value="ws" />
++    <param name="vshl-core" value="ws" />
    </feature>
    <feature name="urn:AGL:widget:required-permission">
      <param name="urn:AGL:permission::public:no-htdocs" value="required" />
