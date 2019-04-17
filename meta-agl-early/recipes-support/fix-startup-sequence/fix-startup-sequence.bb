@@ -53,25 +53,6 @@ if [[ -f $svcfile ]]; then
 	sed -i -e 's|/usr/bin/bluealsa\>|/usr/bin/bluealsa_wait_bt.sh &|' $svcfile
 fi
 
-logger -t $(basename $BASH_SOURCE) "WORKAROUND!!! HOT PATCH ON BTMANAGER"
-for svc in \
-	service-agl-service-bluetooth \
-	; do
-    for x in $srcdir/afm-$svc--*@.service; do
-		sed -i '/\[Unit\]/ a After=bluez-alsa.service' $x
-	done
-done
-
-logger -t $(basename $BASH_SOURCE) "WORKAROUND!!! HOT PATCH ON 4A"
-for svc in \
-	service-agl-service-audio-4a \
-	; do
-    for x in $srcdir/afm-$svc--*@.service; do
-		sed -i '/\[Unit\]/ a After=bluez-alsa.service' $x
-		sed -i '/\[Unit\]/ a Requires=bluez-alsa.service' $x
-		sed -i '/\[Service\]/ a ExecStartPre=/bin/sleep 2' $x
-	done
-done
 
 EOF
 	chmod a+x ${D}/${sysconfdir}/agl-postinsts/B0_${PN}.sh
