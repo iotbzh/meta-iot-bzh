@@ -1,9 +1,10 @@
-From d785ca6b87f70e3f68cd5da5119df7717b095450 Mon Sep 17 00:00:00 2001
+From bcee54b28801ad7edfeb7ca093386dfd160b7056 Mon Sep 17 00:00:00 2001
 From: Pierre MARZIN <pierre.marzin@iot.bzh>
 Date: Mon, 25 Mar 2019 15:28:49 +0100
 Subject: [PATCH] Speech-Chrome-changes-integrated-into-homescreen
 
 Signed-off-by: Pierre MARZIN <pierre.marzin@iot.bzh>
+Signed-off-by: Thierry Bultel <thierry.bultel@iot.bzh>
 ---
  homescreen/homescreen.pro                     |  12 +-
  homescreen/qml/SpeechChrome.qml               | 112 ++++++++++++++
@@ -553,7 +554,7 @@ index 0000000..27c26cb
 +};
 diff --git a/homescreen/src/constants.h b/homescreen/src/constants.h
 new file mode 100644
-index 0000000..2c04623
+index 0000000..38de9b9
 --- /dev/null
 +++ b/homescreen/src/constants.h
 @@ -0,0 +1,40 @@
@@ -565,7 +566,7 @@ index 0000000..2c04623
 +#include <QJsonObject>
 +
 +namespace vshl {
-+const QString API = QLatin1String("vshl");
++const QString API = QLatin1String("vshl-core");
 +const QString VOICE_AGENT_ENUMERATION_VERB = QLatin1String("enumerateVoiceAgents");
 +const QString SUBSCRIBE_VERB = QLatin1String("subscribe");
 +const QString TAP_TO_TALK_VERB = QLatin1String("startListening");
@@ -588,7 +589,7 @@ index 0000000..2c04623
 +const QString VOICE_AGENT_EVENTS_ARG = QLatin1String("events");
 +const QString VOICE_AGENT_ACTIONS_ARG = QLatin1String("actions");
 +
-+const QString VOICE_DIALOG_STATE_EVENT = QLatin1String("vshl/voice_dialogstate_event#");
++const QString VOICE_DIALOG_STATE_EVENT = QLatin1String("vshl-core/voice_dialogstate_event#");
 +const QString VOICE_DIALOG_IDLE = QLatin1String("IDLE");
 +const QString VOICE_DIALOG_LISTENING = QLatin1String("LISTENING");
 +const QString VOICE_DIALOG_THINKING = QLatin1String("THINKING");
@@ -627,7 +628,7 @@ index 5f283fb..5c819f9 100644
      engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
  
 diff --git a/package/config.xml b/package/config.xml
-index a15baee..5d61aac 100644
+index a15baee..56d9b40 100644
 --- a/package/config.xml
 +++ b/package/config.xml
 @@ -13,6 +13,7 @@
@@ -639,5 +640,5 @@ index a15baee..5d61aac 100644
    <feature name="urn:AGL:widget:required-permission">
      <param name="urn:AGL:permission::public:no-htdocs" value="required" />
 -- 
-2.17.1
+2.20.1
 
