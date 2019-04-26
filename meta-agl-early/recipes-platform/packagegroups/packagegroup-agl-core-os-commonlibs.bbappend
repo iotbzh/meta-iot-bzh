@@ -2,6 +2,7 @@ RDEPENDS_${PN} += "\
 	iotbzh-base-files \
 	platform-hardware-info \
 	fix-startup-sequence \
+	xdelta3 \
 "
 
 # only for rcar platforms
