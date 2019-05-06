@@ -32,15 +32,17 @@ EOF
 	exit 1
 }
 
-TEMP=$(getopt -o vh -l verbose,help -n $SCRIPT -- "$@")
+TEMP=$(getopt -o svh -l show-details,verbose,help -n $SCRIPT -- "$@")
 [[ $? != 0 ]] && usage
 eval set -- "$TEMP"
 
 #default options values
 VERBOSE=0
+SHOW_DETAILS=0
 
 while true; do
 	case "$1" in
+		-s|--show-details) SHOW_DETAILS=1; shift ;;
 		-v|--verbose) VERBOSE=1; shift ;;
 		-h|--help) HELP=1; shift ;;
 		--) shift; break;;
@@ -90,22 +92,33 @@ sys_info()
 		MEM_SPEED=$(grep -i "Speed" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
 	fi
 
-	GPU_NAME=$(lspci  -v -s  $(lspci | grep ' VGA ' | cut -d" " -f 1) | grep "Subsystem" | awk -F": " '{print $2}')
+	GPU_BUS=$(lspci | grep ' VGA ' | cut -d" " -f 1)
+	if [ "$GPU_BUS" != "" ]
+	then
+		GPU_NAME=$(lspci  -v -s  $(GPU_BUS) | grep "Subsystem" | awk -F": " '{print $2}')
+	else
+		GPU_NAME="N/A"
+	fi
 
-	echo -en "\r Hardware information :\n"
-	echo -e " * CPU : $CPU_NAME"
-	echo -e "   - Cores : $CPU_NB_CORE"
-	echo -e "   - Freq  : $CPU_FREQ"
-	echo -e "   - Cache : $CPU_CACHE_SIZE"
-	echo -e "   - Bogo  : $CPU_BOGO_MIPS MIPS"
+	if [[ "$SHOW_DETAILS" == 1 ]]
+	then
+		echo -en "\r Hardware information :\n"
+		echo -e " * CPU : $CPU_NAME"
+		echo -e "   - Cores : $CPU_NB_CORE"
+		echo -e "   - Freq  : $CPU_FREQ"
+		echo -e "   - Cache : $CPU_CACHE_SIZE"
+		echo -e "   - Bogo  : $CPU_BOGO_MIPS MIPS"
 
-	echo -e " * RAM : $RAM_NAME"
-	echo -e "   - Size  : $MEM_SIZE"
-	echo -e "   - Speed : $MEM_SPEED"
+		echo -e " * RAM : $RAM_NAME"
+		echo -e "   - Size  : $MEM_SIZE"
+		echo -e "   - Speed : $MEM_SPEED"
 
-	echo -e " * GPU : $GPU_NAME"
-#	echo -e "   - Freq  : $GPU_FREQ MHz"
-	echo    ""
+		echo -e " * GPU : $GPU_NAME"
+# 		echo -e "   - Freq  : $GPU_FREQ MHz"
+		echo    ""
+	else
+		echo -en " OK.\n\n"
+	fi
 }
 
 print_result()
