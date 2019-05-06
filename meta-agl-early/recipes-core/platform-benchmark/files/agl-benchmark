@@ -125,13 +125,13 @@ print_result()
 {
 	if [ $1 == "CPU" ]
 	then
-		CPU_SCORE=$(grep "] cpu" $CPU_LOG_FILE | awk -F"] cpu" '{print $2}' | sed -e 's/^[ \t]*//' | cut -d' ' -f1)
+		CPU_SCORE=$(grep "] cpu" $CPU_LOG_FILE | awk -F"] cpu" '{print $2}' | sed -e 's/^[ \t]*//' | awk -F" " '{print $5}' | cut -d'.' -f1)
 		echo -en "\r * CPU Results :  \n"
 		echo -e "   - Stress-ng : $gr$CPU_SCORE$nc"
 
 	elif [ $1 == "RAM" ]
 	then
-		RAM_SCORE=$(grep "] vm" $RAM_LOG_FILE | awk -F"] vm" '{print $2}' | sed -e 's/^[ \t]*//' | cut -d' ' -f1)
+		RAM_SCORE=$(grep "] vm" $RAM_LOG_FILE | awk -F"] vm" '{print $2}' | sed -e 's/^[ \t]*//' | awk -F" " '{print $5}' | cut -d'.' -f1)
 		echo -en "\r * RAM Results :  \n"
 		echo -e "   - Stress-ng : $gr$RAM_SCORE$nc"
 
