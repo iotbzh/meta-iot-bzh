@@ -17,6 +17,9 @@ CPU_LOG_FILE=/tmp/agl-benchmark.testcpu.log
 RAM_LOG_FILE=/tmp/agl-benchmark.testram.log
 GPU_LOG_FILE=/tmp/agl-benchmark.testgpu.log
 
+trap "exit" INT TERM ERR
+trap "kill 0" EXIT
+
 function usage() {
 	cat <<EOF >&2
 Usage: $SCRIPT [options]
