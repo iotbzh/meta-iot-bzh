@@ -1,5 +1,6 @@
 RDEPENDS_${PN} += "\
 	iotbzh-base-files \
+	packagegroup-benchmark \
 	platform-hardware-info \
 	fix-startup-sequence \
 	xdelta3 \

@@ -1,0 +1,202 @@
+#!/bin/bash
+
+vMAJOR=0
+vMINOR=1
+
+VERSION=${vMAJOR}.${vMINOR}
+
+SCRIPT=$(basename $BASH_SOURCE)
+
+rd='\e[0;31m'
+gr='\e[0;32m'
+yl='\e[0;33m'
+bl='\e[0;34m'
+nc='\e[0m' # no color
+
+CPU_LOG_FILE=/tmp/agl-benchmark.testcpu.log
+RAM_LOG_FILE=/tmp/agl-benchmark.testram.log
+GPU_LOG_FILE=/tmp/agl-benchmark.testgpu.log
+
+function usage() {
+	cat <<EOF >&2
+Usage: $SCRIPT [options]
+
+Options:
+   -v|--verbose
+      show all output messages
+      default: off
+   -h|--help
+      get this help
+
+EOF
+	exit 1
+}
+
+TEMP=$(getopt -o svh -l show-details,verbose,help -n $SCRIPT -- "$@")
+[[ $? != 0 ]] && usage
+eval set -- "$TEMP"
+
+#default options values
+VERBOSE=0
+SHOW_DETAILS=0
+
+while true; do
+	case "$1" in
+		-s|--show-details) SHOW_DETAILS=1; shift ;;
+		-v|--verbose) VERBOSE=1; shift ;;
+		-h|--help) HELP=1; shift ;;
+		--) shift; break;;
+		*) error "Internal error"; exit 1;;
+	esac
+done
+
+[[ "$HELP" == 1 ]] && usage
+
+clean()
+{
+	if [ -f $CPU_LOG_FILE ]
+	then rm $CPU_LOG_FILE
+	fi
+
+	if [ -f $RAM_LOG_FILE ]
+	then rm $RAM_LOG_FILE
+	fi
+
+	if [ -f $GPU_LOG_FILE ]
+	then rm $GPU_LOG_FILE
+	fi
+}
+sys_info()
+{
+	#Start by identifying general system information
+
+	echo -en " Scanning hardware..."
+
+	CPU_NAME=$(cat /proc/cpuinfo | grep -i "^model name" | awk -F": " '{print $2}' | head -1 | sed 's/ \+/ /g')
+	CPU_NB_CORE=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
+	CPU_FREQ=$(cat /proc/cpuinfo | grep -i "^model name" | awk -F"@ " '{print $2}' | head -1)
+	CPU_CACHE_SIZE=$(cat /proc/cpuinfo | grep -i "^cache size" | awk -F": " '{print $2}' | head -1)
+	CPU_BOGO_MIPS=$(cat /proc/cpuinfo | grep -i "^bogomips" | awk -F": " '{print $2}' | head -1)
+
+	if [ "$EUID" -ne 0 ]
+	then
+		RAM_NAME="N/A"
+		MEM_SIZE=$(awk '/MemTotal/ {print $2}' /proc/meminfo)" kB"
+		MEM_SPEED="N/A"
+	else
+		dmidecode --type 17 &> /tmp/raminfo.log
+		RAM_BREND=$(grep -i "Manufacturer" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
+		RAM_PN=$(grep -i "Part Number" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
+		RAM_NAME=$RAM_BREND" "$RAM_PN
+		MEM_SIZE=$(grep -i "Size" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
+		MEM_SPEED=$(grep -i "Speed" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
+	fi
+
+	GPU_BUS=$(lspci | grep ' VGA ' | cut -d" " -f 1)
+	if [ "$GPU_BUS" != "" ]
+	then
+		GPU_NAME=$(lspci  -v -s  $(GPU_BUS) | grep "Subsystem" | awk -F": " '{print $2}')
+	else
+		GPU_NAME="N/A"
+	fi
+
+	if [[ "$SHOW_DETAILS" == 1 ]]
+	then
+		echo -en "\r Hardware information :\n"
+		echo -e " * CPU : $CPU_NAME"
+		echo -e "   - Cores : $CPU_NB_CORE"
+		echo -e "   - Freq  : $CPU_FREQ"
+		echo -e "   - Cache : $CPU_CACHE_SIZE"
+		echo -e "   - Bogo  : $CPU_BOGO_MIPS MIPS"
+
+		echo -e " * RAM : $RAM_NAME"
+		echo -e "   - Size  : $MEM_SIZE"
+		echo -e "   - Speed : $MEM_SPEED"
+
+		echo -e " * GPU : $GPU_NAME"
+# 		echo -e "   - Freq  : $GPU_FREQ MHz"
+		echo    ""
+	else
+		echo -en " OK.\n\n"
+	fi
+}
+
+print_result()
+{
+	if [ $1 == "CPU" ]
+	then
+		CPU_SCORE=$(grep "] cpu" $CPU_LOG_FILE | awk -F"] cpu" '{print $2}' | sed -e 's/^[ \t]*//' | awk -F" " '{print $5}' | cut -d'.' -f1)
+		echo -en "\r * CPU Results :  \n"
+		echo -e "   - Stress-ng : $gr$CPU_SCORE$nc"
+
+	elif [ $1 == "RAM" ]
+	then
+		RAM_SCORE=$(grep "] vm" $RAM_LOG_FILE | awk -F"] vm" '{print $2}' | sed -e 's/^[ \t]*//' | awk -F" " '{print $5}' | cut -d'.' -f1)
+		echo -en "\r * RAM Results :  \n"
+		echo -e "   - Stress-ng : $gr$RAM_SCORE$nc"
+
+	elif [ $1 == "GPU" ]
+	then
+		GPU_SCORE=$(grep "glmark2 Score" $GPU_LOG_FILE | awk -F": " '{print $2}' | cut -d' ' -f1)
+		echo -en "\r * GPU Results :  \n"
+		echo -e "   - glmark2   : $gr$GPU_SCORE$nc"
+	fi
+}
+
+launch_all_tests()
+{
+	echo " Start benchmarking..."
+
+	#CPU benchmarking
+	if [ $VERBOSE -eq 1 ]
+	then
+		tail -f $CPU_LOG_FILE &
+	fi
+	echo -en " * CPU Testing..."
+	stress-ng --cpu $CPU_NB_CORE --cpu-method fft --metrics-brief --timeout 5s &> $CPU_LOG_FILE
+	print_result "CPU"
+
+	#RAM benchmarking
+	if [ $VERBOSE -eq 1 ]
+	then
+		tail -f $RAM_LOG_FILE &
+	fi
+	echo -en " * RAM Testing..."
+	stress-ng --vm 1 --vm-bytes 128M --metrics-brief --timeout 5s &> $RAM_LOG_FILE
+	print_result "RAM"
+
+	#GPU benchmarking
+	if [ $VERBOSE -eq 1 ]
+	then
+		tail -f $GPU_LOG_FILE &
+	fi
+	echo -en " * GPU Testing..."
+	glmark2-es2-wayland --off-screen &> $GPU_LOG_FILE
+	print_result "GPU"
+
+	echo ""
+
+	AGL_SCORE=$(($CPU_SCORE*45+$RAM_SCORE*5+$GPU_SCORE*50))
+	AGL_SCORE=$(($AGL_SCORE/100))
+}
+
+###############################################################################################
+
+
+echo -e "$rd######################################"
+echo -e "#$nc   AGL Benchmarking script - v$VERSION   $rd#"
+echo -e "$rd######################################$nc\n"
+
+
+clean
+
+sys_info
+
+launch_all_tests
+
+
+echo -e "$rd######################################"
+printf "#$nc Your AGL Benchmarking score: $gr%5s $rd#\n" $AGL_SCORE
+echo -e "$rd######################################$nc\n"
+
+exit 0
