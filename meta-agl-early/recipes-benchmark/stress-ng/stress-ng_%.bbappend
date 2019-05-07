@@ -1,0 +1,1 @@
+DEPENDS += "coreutils-native"
