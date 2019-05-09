@@ -1,3 +1,5 @@
+#!/bin/bash
+
 detect_renesas() {
 	[[ ! "$(cat /sys/devices/soc0/family)" =~ ^R-Car ]] && return 0;
 	info "R-Car SoC family detected."
@@ -16,16 +18,16 @@ detect_renesas() {
 	#    M3-N - R8A77965
 	# "E" - Entry class
 	#    E2 - R8A7794
+	#    E3 - R8A77990
 	# "V" - ADAS
 	#    V2H - R8A7792
 	#    V3M - R8A77970
 	#    V3H - R8A77980
 
 	local -A keys
-
-	function readkey() { [[ -f $1 ]] && cat $1 || echo "unknown"; }
 	
 	# soc information
+	keys[soc_vendor]="Renesas"
 	keys[soc_family]=$(readkey /sys/devices/soc0/family)
 
 	keys[soc_id]=$(readkey /sys/devices/soc0/soc_id)
@@ -43,6 +45,7 @@ detect_renesas() {
 		r8a77960)			keys[soc_name]="M3-W" ;;
 		r8a77965)			keys[soc_name]="M3-N" ;;
 		r8a7794)			keys[soc_name]="E2"   ;;
+		r8a77990)			keys[soc_name]="E3"   ;;
 		r8a7792)			keys[soc_name]="V2H"  ;;
 		r8a77970)			keys[soc_name]="V3M"  ;;
 		r8a77980)			keys[soc_name]="V3H"  ;;

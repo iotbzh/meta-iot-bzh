@@ -175,6 +175,8 @@ function addkey() {
 	__keys[$k]="$@"
 }
 
+function readkey() { [[ -f $1 ]] && cat $1 || echo "unknown"; }
+
 # run all fragments in specified fragment dir
 [[ ! -d $fragdir ]] && { error "Invalid fragments dir '$fragdir'."; exit 1; }
 for x in $(ls $fragdir/??[._]* 2>/dev/null); do
