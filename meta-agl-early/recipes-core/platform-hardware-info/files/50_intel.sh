@@ -16,6 +16,7 @@ detect_intel() {
 	# cpu information
 	keys[cpu_microarch]=$(readkey /sys/devices/cpu/caps/pmu_name)
 	keys[cpu_compatibility]="unknown"
+	keys[cpu_freq]=$(dmidecode --type processor | grep -m1 "Max Speed" | awk -F": " '{print $2}' | awk '{print $1;}')
 
 	for x in ${!keys[@]}; do
 		addkey $x "${keys[$x]}"

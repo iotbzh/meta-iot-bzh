@@ -61,6 +61,10 @@ detect_renesas() {
 	[[ "$(grep MODALIAS /sys/devices/system/cpu/cpu0/uevent)" =~ :type:([^:]+):.*$ ]] && {
 		keys[cpu_arch]=${BASH_REMATCH[1]}
 	}
+	keys[cpu_freq]=$(readkey /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)
+	if [ ${keys[cpu_freq]} != "unknown" ]
+	then keys[cpu_freq]=$((${keys[cpu_freq]}/1000))
+	fi
 
 	local k1=$(grep OF_COMPATIBLE_0 /sys/devices/system/cpu/cpu0/uevent | cut -f2 -d',')
 	local k2=$(grep OF_COMPATIBLE_1 /sys/devices/system/cpu/cpu0/uevent | cut -f2 -d',')
