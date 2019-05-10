@@ -9,7 +9,7 @@ SRC_URI =  " \
     file://agl-benchmark \
 "
 
-PV = "0.1"
+PV = "0.2"
 
 RDEPENDS_${PN}  += "bash"
 

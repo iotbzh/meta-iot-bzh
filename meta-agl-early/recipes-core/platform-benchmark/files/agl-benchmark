@@ -1,9 +1,11 @@
 #!/bin/bash
 
 vMAJOR=0
-vMINOR=1
+vMINOR=2
 
 VERSION=${vMAJOR}.${vMINOR}
+
+source /etc/platform-info/hardware
 
 SCRIPT=$(basename $BASH_SOURCE)
 
@@ -75,48 +77,41 @@ sys_info()
 
 	echo -en " Scanning hardware..."
 
-	CPU_NAME=$(cat /proc/cpuinfo | grep -i "^model name" | awk -F": " '{print $2}' | head -1 | sed 's/ \+/ /g')
-	CPU_NB_CORE=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
-	CPU_FREQ=$(cat /proc/cpuinfo | grep -i "^model name" | awk -F"@ " '{print $2}' | head -1)
-	CPU_CACHE_SIZE=$(cat /proc/cpuinfo | grep -i "^cache size" | awk -F": " '{print $2}' | head -1)
-	CPU_BOGO_MIPS=$(cat /proc/cpuinfo | grep -i "^bogomips" | awk -F": " '{print $2}' | head -1)
+	CPU_NAME=$HW_SOC_VENDOR" "$HW_SOC_FAMILY" "$HW_SOC_ID
+	CPU_NB_ONLINE_CORE=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
+	CPU_FREQ=$HW_CPU_FREQ_MHZ
+	CPU_CACHE_SIZE=$HW_CPU_CACHE_KB
+	CPU_BOGO_MIPS=$(cat /proc/cpuinfo | grep -i -m1 "^bogomips" | awk -F": " '{print $2}')
 
-	if [ "$EUID" -ne 0 ]
+	if [ "$HW_CPU_ARCH" == "aarch64" ]
 	then
 		RAM_NAME="N/A"
-		MEM_SIZE=$(awk '/MemTotal/ {print $2}' /proc/meminfo)" kB"
+		MEM_SIZE=$HW_MEMORY_TOTAL_MB
 		MEM_SPEED="N/A"
 	else
 		dmidecode --type 17 &> /tmp/raminfo.log
-		RAM_BREND=$(grep -i "Manufacturer" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
-		RAM_PN=$(grep -i "Part Number" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
-		RAM_NAME=$RAM_BREND" "$RAM_PN
-		MEM_SIZE=$(grep -i "Size" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
-		MEM_SPEED=$(grep -i "Speed" /tmp/raminfo.log | awk -F": " '{print $2}' | head -1)
-	fi
-
-	GPU_BUS=$(lspci | grep ' VGA ' | cut -d" " -f 1)
-	if [ "$GPU_BUS" != "" ]
-	then
-		GPU_NAME=$(lspci  -v -s  $(GPU_BUS) | grep "Subsystem" | awk -F": " '{print $2}')
-	else
-		GPU_NAME="N/A"
+		RAM_BRAND=$(grep -i -m1 "Manufacturer" /tmp/raminfo.log | awk -F": " '{print $2}')
+		RAM_PN=$(grep -i -m1 "Part Number" /tmp/raminfo.log | awk -F": " '{print $2}')
+		RAM_NAME=$RAM_BRAND" "$RAM_PN
+		MEM_SIZE=$HW_MEMORY_TOTAL_MB
+		MEM_SPEED=$(grep -i -m1 "Speed" /tmp/raminfo.log | awk -F": " '{print $2}')
 	fi
 
 	if [[ "$SHOW_DETAILS" == 1 ]]
 	then
 		echo -en "\r Hardware information :\n"
 		echo -e " * CPU : $CPU_NAME"
-		echo -e "   - Cores : $CPU_NB_CORE"
-		echo -e "   - Freq  : $CPU_FREQ"
-		echo -e "   - Cache : $CPU_CACHE_SIZE"
+		echo -e "   - Arch  : $HW_CPU_ARCH"
+		echo -e "   - Cores : $CPU_NB_ONLINE_CORE/$HW_CPU_COUNT"
+		echo -e "   - Freq  : $CPU_FREQ MHz"
+		echo -e "   - Cache : $CPU_CACHE_SIZE KB"
 		echo -e "   - Bogo  : $CPU_BOGO_MIPS MIPS"
 
 		echo -e " * RAM : $RAM_NAME"
-		echo -e "   - Size  : $MEM_SIZE"
+		echo -e "   - Size  : $MEM_SIZE MB"
 		echo -e "   - Speed : $MEM_SPEED"
 
-		echo -e " * GPU : $GPU_NAME"
+		echo -e " * GPU : $HW_GPU_NAME"
 # 		echo -e "   - Freq  : $GPU_FREQ MHz"
 		echo    ""
 	else
@@ -156,7 +151,7 @@ launch_all_tests()
 		tail -f $CPU_LOG_FILE &
 	fi
 	echo -en " * CPU Testing..."
-	stress-ng --cpu $CPU_NB_CORE --cpu-method fft --metrics-brief --timeout 5s &> $CPU_LOG_FILE
+	stress-ng --cpu $CPU_NB_ONLINE_CORE --cpu-method fft --metrics-brief --timeout 5s &> $CPU_LOG_FILE
 	print_result "CPU"
 
 	#RAM benchmarking

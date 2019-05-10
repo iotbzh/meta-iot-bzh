@@ -11,7 +11,7 @@ PACKAGES = " \
 RDEPENDS_packagegroup-benchmark = " \
     stress-ng \
     glmark2 \
-	dmidecode \
+    dmidecode \
     pciutils \
     platform-benchmark \
 "
