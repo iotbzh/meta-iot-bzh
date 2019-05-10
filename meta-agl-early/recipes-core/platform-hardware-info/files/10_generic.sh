@@ -54,7 +54,7 @@ detect_cpu() {
 
 detect_memory() {
 	# total mem in MB
-	addkey "memory_total" $(( $(getconf _PHYS_PAGES) * $(getconf PAGESIZE) / (1024*1024) ))
+	addkey "memory_total_mb" $(( $(getconf _PHYS_PAGES) * $(getconf PAGESIZE) / (1024*1024) ))
 }
 
 detect_netifaces

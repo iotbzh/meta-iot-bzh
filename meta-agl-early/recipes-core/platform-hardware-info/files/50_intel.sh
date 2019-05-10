@@ -16,13 +16,35 @@ detect_intel() {
 	# cpu information
 	keys[cpu_microarch]=$(readkey /sys/devices/cpu/caps/pmu_name)
 	keys[cpu_compatibility]="unknown"
-	keys[cpu_freq]=$(dmidecode --type processor | grep -m1 "Max Speed" | awk -F": " '{print $2}' | awk '{print $1;}')
+	keys[cpu_freq_mhz]=$(dmidecode --type processor | grep -m1 "Max Speed" | awk -F": " '{print $2}' | awk '{print $1;}')
+	#On Intel recent arch, L1 and L2 are per CPU core and L3 is optionnal and shared by all core.
+	CPU_COUNT=$(getconf _NPROCESSORS_CONF)
+	CPU_CACHE_L1=$(cat /sys/devices/system/cpu/cpu0/cache/index1/size)
+	CPU_CACHE_L1=${CPU_CACHE_L1%?}
+	CPU_CACHE_L2=$(cat /sys/devices/system/cpu/cpu0/cache/index2/size)
+	CPU_CACHE_L2=${CPU_CACHE_L2%?}
+	if [ -f /sys/devices/system/cpu/cpu0/cache/index3/size ]
+	then
+		CPU_CACHE_L3=$(cat /sys/devices/system/cpu/cpu0/cache/index3/size)
+		CPU_CACHE_L3=${CPU_CACHE_L3%?}
+	else
+		CPU_CACHE_L3=0
+	fi
+	keys[cpu_cache_kb]=$(($CPU_CACHE_L1*$CPU_COUNT+$CPU_CACHE_L2*$CPU_COUNT+$CPU_CACHE_L3))
+
+	#gpu_information
+	keys[gpu_name]="unknown"
+	GPU_BUS=$(lspci | grep ' VGA ' | cut -d" " -f 1)
+	if [ "$GPU_BUS" != "" ]
+	then
+		keys[gpu_name]=$(lspci -v -s $GPU_BUS | grep "Subsystem" | awk -F": " '{print $2}')
+	fi
 
 	for x in ${!keys[@]}; do
 		addkey $x "${keys[$x]}"
 	done
 	
-	#detect board model
+	#detect board model and add specific soc details
 	case ${keys[soc_id]} in
 		E3826)
 			keys[board_model]="Minnowboard Turbot"	

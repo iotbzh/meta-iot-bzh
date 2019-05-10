@@ -34,18 +34,20 @@ detect_renesas() {
 	keys[soc_id]=${keys[soc_id],,}
 
 	keys[soc_name]="unknown"
+	keys[cpu_cache_kb]="unknown"
+	keys[gpu_name]="unknown"
 	case ${keys[soc_id]} in
 		r8a7779)			keys[soc_name]="H1"   ;;
 		r8a7790)			keys[soc_name]="H2"   ;;
-		r8a7795|r8j7795)	keys[soc_name]="H3"   ;;
+		r8a7795|r8j7795)	keys[soc_name]="H3"; keys[cpu_cache_kb]=3044; keys[gpu_name]="IMG PowerVR Series6XT GX6650";   ;;
 		r8a7778)			keys[soc_name]="M1A"  ;;
 		r8a7791)			keys[soc_name]="M2-W" ;;
 		r8a7793)			keys[soc_name]="M2-N" ;;
-		r8a7796)			keys[soc_name]="M3"   ;;
+		r8a7796)			keys[soc_name]="M3"; keys[cpu_cache_kb]=1952; keys[gpu_name]="IMG PowerVR Series6XT GX6250";   ;;
 		r8a77960)			keys[soc_name]="M3-W" ;;
 		r8a77965)			keys[soc_name]="M3-N" ;;
 		r8a7794)			keys[soc_name]="E2"   ;;
-		r8a77990)			keys[soc_name]="E3"   ;;
+		r8a77990)			keys[soc_name]="E3"; keys[cpu_cache_kb]=384; keys[gpu_name]="IMG PowerVR Series8XE GE8300";   ;;
 		r8a7792)			keys[soc_name]="V2H"  ;;
 		r8a77970)			keys[soc_name]="V3M"  ;;
 		r8a77980)			keys[soc_name]="V3H"  ;;
@@ -61,9 +63,9 @@ detect_renesas() {
 	[[ "$(grep MODALIAS /sys/devices/system/cpu/cpu0/uevent)" =~ :type:([^:]+):.*$ ]] && {
 		keys[cpu_arch]=${BASH_REMATCH[1]}
 	}
-	keys[cpu_freq]=$(readkey /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)
-	if [ ${keys[cpu_freq]} != "unknown" ]
-	then keys[cpu_freq]=$((${keys[cpu_freq]}/1000))
+	keys[cpu_freq_mhz]=$(readkey /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq)
+	if [ ${keys[cpu_freq_mhz]} != "unknown" ]
+	then keys[cpu_freq_mhz]=$((${keys[cpu_freq_mhz]}/1000))
 	fi
 
 	local k1=$(grep OF_COMPATIBLE_0 /sys/devices/system/cpu/cpu0/uevent | cut -f2 -d',')
