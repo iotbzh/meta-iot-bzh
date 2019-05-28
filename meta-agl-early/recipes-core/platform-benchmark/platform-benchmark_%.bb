@@ -9,7 +9,7 @@ SRC_URI =  " \
     file://agl-benchmark \
 "
 
-PV = "0.3"
+PV = "0.4"
 
 RDEPENDS_${PN}  += "bash platform-hardware-info"
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 vMAJOR=0
-vMINOR=3
+vMINOR=4
 
 VERSION=${vMAJOR}.${vMINOR}
 
@@ -23,6 +23,12 @@ CPU_LOG_FILE_5=/tmp/agl-benchmark.testcpu5.log
 RAM_LOG_FILE=/tmp/agl-benchmark.testram.log
 GPU_LOG_FILE=/tmp/agl-benchmark.testgpu.log
 
+
+CPU_SCORE1_WEIGHT=2
+CPU_SCORE2_WEIGHT=8
+CPU_SCORE3_WEIGHT=20
+CPU_SCORE4_WEIGHT=1
+CPU_SCORE5_WEIGHT=1/2
 CPU_WEIGHT=45
 RAM_WEIGHT=5
 GPU_WEIGHT=50
@@ -108,7 +114,7 @@ sys_info()
 	CPU_BOGO_MIPS=$(cat /proc/cpuinfo | grep -i -m1 "^bogomips" | awk -F": " '{print $2}') && [[ ! $CPU_BOGO_MIPS ]] && $CPU_BOGO_MIPS="?"
 
 	#RAM and MEM information
-	if [ "$HW_CPU_ARCH" == "aarch64" ]
+	if [ "$CPU_ARCH" == "aarch64" ]
 	then
 		RAM_NAME="unknown"
 		MEM_SIZE=$HW_MEMORY_TOTAL_MB && [[ ! $MEM_SIZE ]] && MEM_SIZE="?"
@@ -157,19 +163,19 @@ print_result()
 		if [ $2 == "1" ]
 		then
 			echo -en "\r * CPU Results :  \n"
-			printf "   - Stress-ng : $gr%5s $nc($CPU_NB_ONLINE_CORE core(s))\n" $CPU_SCORE1
+			printf "   - Stress-ng : $gr%5s $nc($CPU_NB_ONLINE_CORE core(s))\n" $(($CPU_SCORE1*$CPU_SCORE1_WEIGHT))
 		elif [ $2 == "2" ]
 		then
-			printf "\r   - Stress-ng : $gr%5s $nc(1 core)\n" $CPU_SCORE2
+			printf "\r   - Stress-ng : $gr%5s $nc(1 core)\n" $(($CPU_SCORE2*$CPU_SCORE2_WEIGHT))
 		elif [ $2 == "3" ]
 		then
-			printf "\r   - Stress-ng : $gr%5s $nc(crc16)\n" $CPU_SCORE3
+			printf "\r   - Stress-ng : $gr%5s $nc(crc16)\n" $(($CPU_SCORE3*$CPU_SCORE3_WEIGHT))
 		elif [ $2 == "4" ]
 		then
-			printf "\r   - Stress-ng : $gr%5s $nc(cfloat)\n" $CPU_SCORE4
+			printf "\r   - Stress-ng : $gr%5s $nc(cfloat)\n" $(($CPU_SCORE4*$CPU_SCORE4_WEIGHT))
 		elif [ $2 == "5" ]
 		then
-			printf "\r   - Stress-ng : $gr%5s $nc(double)\n" $CPU_SCORE5
+			printf "\r   - Stress-ng : $gr%5s $nc(double)\n" $(($CPU_SCORE5*$CPU_SCORE5_WEIGHT))
 		fi
 	elif [ $1 == "RAM" ]
 	then
@@ -224,7 +230,7 @@ launch_all_tests()
 
 	echo ""
 
-	MOY_CPU_SCORE=$((($CPU_SCORE1+$CPU_SCORE2+$CPU_SCORE3+$CPU_SCORE4+$CPU_SCORE5)/5))
+	MOY_CPU_SCORE=$((($CPU_SCORE1*$CPU_SCORE1_WEIGHT+$CPU_SCORE2*$CPU_SCORE2_WEIGHT+$CPU_SCORE3*$CPU_SCORE3_WEIGHT+$CPU_SCORE4*$CPU_SCORE4_WEIGHT+$CPU_SCORE5*$CPU_SCORE5_WEIGHT)/5))
 	AGL_CPU_SCORE=$(($MOY_CPU_SCORE*$CPU_WEIGHT/$WEIGHT))
 	AGL_RAM_SCORE=$(($RAM_SCORE*$RAM_WEIGHT/$WEIGHT))
 	AGL_GPU_SCORE=$(($GPU_SCORE*$GPU_WEIGHT/$WEIGHT))
