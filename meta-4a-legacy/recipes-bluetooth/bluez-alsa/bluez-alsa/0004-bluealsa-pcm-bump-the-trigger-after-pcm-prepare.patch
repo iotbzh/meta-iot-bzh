@@ -1,0 +1,35 @@
+From ba292e82928a6a0ea663039ba2d5c030c4cfa80d Mon Sep 17 00:00:00 2001
+From: Thierry Bultel <thierry.bultel@iot.bzh>
+Date: Fri, 8 Feb 2019 10:21:55 +0100
+Subject: [PATCH] bluealsa-pcm: bump the trigger after pcm prepare
+
+When a sound application recovers from a EPIPE by calling
+snd_pcm_prepare, and goes immediately after to a call to poll,
+it would be stuck forever unless the internal event trigger
+is bumped.
+
+Signed-off-by: Thierry Bultel <thierry.bultel@iot.bzh>
+---
+ src/asound/bluealsa-pcm.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/asound/bluealsa-pcm.c b/src/asound/bluealsa-pcm.c
+index 42cb61d..4ccbf0d 100644
+--- a/src/asound/bluealsa-pcm.c
++++ b/src/asound/bluealsa-pcm.c
+@@ -351,6 +351,12 @@ static int bluealsa_prepare(snd_pcm_ioplug_t *io) {
+ 	pcm->io_ptr = 0;
+ 
+ 	debug("Prepared: %d", pcm->fd);
++
++	/* When the sound application calls poll just after snd_pcm_prepare,
++	 * it would block forever unless the internal trigger is bumped
++	 * */
++	eventfd_write(pcm->event_fd, 1);
++
+ 	return 0;
+ }
+ 
+-- 
+2.16.4
+

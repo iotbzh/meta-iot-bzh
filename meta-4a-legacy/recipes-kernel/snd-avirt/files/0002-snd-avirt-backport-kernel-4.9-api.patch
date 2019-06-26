@@ -1,0 +1,63 @@
+From fe7fc04e4f685c72b4f971ca0e23b10d683cffe0 Mon Sep 17 00:00:00 2001
+From: Mark Farrugia <mark.farrugia@fiberdyne.com.au>
+Date: Fri, 16 Nov 2018 16:10:12 +1100
+Subject: [PATCH] snd-avirt-backport-kernel-4.9-api
+
+---
+ dummy/dummy.c       | 6 +++---
+ loopback/loopback.c | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/dummy/dummy.c b/dummy/dummy.c
+index f683b92..c37be09 100644
+--- a/dummy/dummy.c
++++ b/dummy/dummy.c
+@@ -125,9 +125,9 @@ static int dummy_systimer_prepare(struct snd_pcm_substream *substream)
+ 	return 0;
+ }
+ 
+-static void dummy_systimer_callback(struct timer_list *t)
++static void dummy_systimer_callback(unsigned long data)
+ {
+-	struct dummy_systimer_pcm *dpcm = from_timer(dpcm, t, timer);
++	struct dummy_systimer_pcm *dpcm = (struct dummy_systimer_pcm *)data;
+ 	unsigned long flags;
+ 	int elapsed = 0;
+ 
+@@ -162,7 +162,7 @@ static int dummy_systimer_create(struct snd_pcm_substream *substream)
+ 	if (!dpcm)
+ 		return -ENOMEM;
+ 	substream->runtime->private_data = dpcm;
+-	timer_setup(&dpcm->timer, dummy_systimer_callback, 0);
++	setup_timer(&dpcm->timer, dummy_systimer_callback, (unsigned long)dpcm);
+ 	spin_lock_init(&dpcm->lock);
+ 	dpcm->substream = substream;
+ 	return 0;
+diff --git a/loopback/loopback.c b/loopback/loopback.c
+index 4181392..6667a69 100644
+--- a/loopback/loopback.c
++++ b/loopback/loopback.c
+@@ -498,9 +498,9 @@ unlock:
+ 	return running;
+ }
+ 
+-static void loopback_timer_function(struct timer_list *t)
++static void loopback_timer_function(unsigned long data)
+ {
+-	struct loopback_pcm *dpcm = from_timer(dpcm, t, timer);
++	struct loopback_pcm *dpcm = (struct loopback_pcm *)data;
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&dpcm->cable->lock, flags);
+@@ -652,7 +652,7 @@ static int loopback_open(struct snd_pcm_substream *substream)
+ 	}
+ 	dpcm->loopback = loopback;
+ 	dpcm->substream = substream;
+-	timer_setup(&dpcm->timer, loopback_timer_function, 0);
++	setup_timer(&dpcm->timer, loopback_timer_function, (unsigned long)dpcm);
+ 
+ 	cable = loopback->cables[substream->pcm->device];
+ 	if (!cable) {
+-- 
+2.17.1
+
