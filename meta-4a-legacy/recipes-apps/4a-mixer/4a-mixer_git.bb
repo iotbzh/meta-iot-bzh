@@ -1,13 +1,13 @@
-SUMMARY     = "Mixer for CES2017 AGL Demonstration"
-DESCRIPTION = "AGL HMI application for control of PulseAudio mixer elements"
-HOMEPAGE    = "https://gerrit.automotivelinux.org/gerrit/#/admin/projects/apps/mixer"
+SUMMARY     = "4A Mixer"
+DESCRIPTION = "AGL HMI application for control of 4A mixer elements"
+HOMEPAGE    = "http://git.ovh.iot/4a-legacy/"
 SECTION     = "apps"
 
 LICENSE     = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ae6497158920d9524cf208c09cc4c984"
 
-SRC_URI = "gitsm://gerrit.automotivelinux.org/gerrit/apps/mixer;protocol=https;branch=${AGL_BRANCH}"
-SRCREV  = "${AGL_APP_REVISION}"
+SRC_URI = "gitsm://git.ovh.iot/4a-legacy/mixer.git;protocol=http;branch=4a-legacy"
+SRCREV  = "0f19df88ec387747300c9da05987f794a19461cc"
 
 PV = "1.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
