@@ -3,6 +3,7 @@
 #
 DISTRO_FEATURES_append = " agl-audio-4a-framework "
 DISTRO_FEATURES_remove = "pipewire"
+DISTRO_FEATURES_remove = "pulseaudio"
 
 # asound.conf is provided by the 4a-hal-config (and not by asound.state)
 #VIRTUAL-RUNTIME_alsa-state = "4a-hal-config"
