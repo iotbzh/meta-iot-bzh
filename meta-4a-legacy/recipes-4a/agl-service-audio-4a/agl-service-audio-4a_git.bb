@@ -6,7 +6,7 @@ SECTION     = "apps"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-service-audio-4a.git;protocol=http;branch=4a-legacy"
+SRC_URI = "gitsm://git.ovh.iot/4a-legacy/agl-service-audio-4a.git;protocol=http;branch=4a-legacy"
 SRCREV = "e0dc747d32ce51072dd088875a89e6c9ebcb7c28"
 
 PV = "0.1+git${SRCPV}"
