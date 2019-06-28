@@ -6,7 +6,7 @@ SECTION     = "apps"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-hal-configs.git;protocol=http;branch=4a-legacy"
+SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-hal-configs.git;protocol=http;branch=master"
 SRCREV = "fdf0e3c4c67ceb5ddc77c9c1f27d85c1be2055a6"
 
 PV = "0.1+git${SRCPV}"

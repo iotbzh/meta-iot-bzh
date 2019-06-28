@@ -6,7 +6,7 @@ SECTION     = "apps"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-softmixer.git;protocol=http;branch=4a-legacy"
+SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-softmixer.git;protocol=http;branch=master"
 SRCREV = "1a75612274f883aed09d198575582abdc0c9fe0f"
 
 DEPENDS += "lua liburcu libafb-helpers libappcontroller libavirt"
