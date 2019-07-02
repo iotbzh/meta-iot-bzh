@@ -17,6 +17,10 @@ RDEPENDS_${PN} += "\
     4a-softmixer \
     4a-hal-generic \
     4a-hal-unicens \
-    snd-avirt \
     ${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', '4a-tools', '' , d)} \
+"
+
+# sdx: disable avirt for now
+DISABLED_RDEPENDS_${PN} += "\
+    snd-avirt \
 "
