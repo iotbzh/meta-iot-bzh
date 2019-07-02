@@ -37,7 +37,7 @@ done
 EOF
 
 	cat <<EOF >>${D}/${sysconfdir}/agl-postinsts/A0_4a-hal-device-config_svcpatch.sh
-sed -i '/ExecStartPre=/ a ExecStartPre=${bindir}/4a-hal-setup ${INSTALL_PREFIX}/4a-hal/default_hals.conf' \$svcfile;
+sed -i '/\[Service\]/ a ExecStartPre=${bindir}/4a-hal-setup ${INSTALL_PREFIX}/4a-hal/default_hals.conf' \$svcfile;
 EOF
 	chmod a+x ${D}/${sysconfdir}/agl-postinsts/A0_4a-hal-device-config_svcpatch.sh
 

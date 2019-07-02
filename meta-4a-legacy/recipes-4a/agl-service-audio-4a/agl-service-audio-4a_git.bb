@@ -30,7 +30,7 @@ while ! ls $svcfile > /dev/null; do
 done
 sed -i '/\[Unit\]/ a Before=pulseaudio.service' $svcfile;
 sed -i '/\[Unit\]/ a ConditionPathExistsGlob=/dev/snd/control*' $svcfile;
-sed -i '/ExecStartPre=/ a Environment=LIBASOUND_THREAD_SAFE=0' $svcfile;
+sed -i '/\[Service\]/ a Environment=LIBASOUND_THREAD_SAFE=0' $svcfile;
 
 sed -i -e 's|/usr/bin/afb-daemon\>|& --ldpath=/usr/libexec/agl/4a-alsa-core/lib:/usr/libexec/agl/4a-hal/lib:/usr/libexec/agl/smixer/lib|' $svcfile
 
