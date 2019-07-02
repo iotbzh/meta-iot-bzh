@@ -27,7 +27,7 @@ S = "${WORKDIR}/git"
 #ASSETS_DIR = "${datadir}/${PN}"
 
 # lightmediascanner currently use hardcoded paths
-ASSETS_DIR = "/root"
+ASSETS_DIR = "/home/1001"
 
 do_install_append() {
     install -d ${D}${ASSETS_DIR}
