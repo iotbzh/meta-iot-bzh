@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+MYNAME=$(basename $BASH_SOURCE)
+
+confdir_default=$(cd $(dirname $(realpath $BASH_SOURCE)) && pwd -P)
+
+function info() { echo "$(basename $BASH_SOURCE) - $@" >&2; }
+function error() { echo "$(basename $BASH_SOURCE) - ERROR: $@" >&2; }
+
+source /etc/platform-info/hardware
+ 
+# --------------------------------------------------------------
+
+
+LISTDIR="${confdir_default}/COMMON"
+if [ -n "${HW_CPU_ARCH}" ];         then LISTDIR="${LISTDIR} ${confdir_default}/CPU_ARCH/${HW_CPU_ARCH}" ;fi
+if [ -n "${HW_SOC_VENDOR}" ];   then LISTDIR="${LISTDIR} ${confdir_default}/SOC_VENDOR/${HW_SOC_VENDOR}" ;fi
+if [ -n "${HW_BOARD_MODEL}" ];then LISTDIR="${LISTDIR} ${confdir_default}/BOARD_MODEL/${HW_BOARD_MODEL}" ;fi
+
+for dir in $LISTDIR; do
+	if [ -d $dir ]; then
+		for sc in $(ls $dir);do
+			bash $dir/$sc
+		done
+	fi
+done
