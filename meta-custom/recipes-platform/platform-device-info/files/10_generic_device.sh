@@ -48,17 +48,6 @@ detect_bluetooth() {
 	addkey bluetooth_devices "${bt[@]}"
 }
 
-detect_cpu() {
-	addkey "cpu_count" $(getconf _NPROCESSORS_CONF)
-}
-
-detect_memory() {
-	# total mem in MB
-	addkey "memory_total_mb" $(( $(getconf _PHYS_PAGES) * $(getconf PAGESIZE) / (1024*1024) ))
-}
-
 detect_netifaces
 detect_bluetooth
-detect_cpu
-detect_memory
 

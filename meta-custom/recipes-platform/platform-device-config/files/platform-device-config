@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -e
+
+MYNAME=$(basename $BASH_SOURCE)
+
+confdir_default=$(cd $(dirname $(realpath $BASH_SOURCE)) && pwd -P)
+
+function info() { echo "$(basename $BASH_SOURCE) - $@" >&2; }
+function error() { echo "$(basename $BASH_SOURCE) - ERROR: $@" >&2; }
+
+source /etc/platform-info/device
+ 
+# --------------------------------------------------------------
+if [ -d ${confdir_default}/COMMON ]; then
+    for sc in $(ls ${confdir_default}/COMMON);do
+        bash $dir/$sc
+    done
+fi
+
+if [ -n "${HW_BLUETOOTH_DEVICES}" ]; then
+    if [ -d ${confdir_default}/BLUETOOTH_DEVICES ]; then
+        for sc in $(ls ${confdir_default}/BLUETOOTH_DEVICES);do
+            bash $dir/$sc ${HW_BLUETOOTH_DEVICES}
+        done
+    fi
+fi
+
+if [ -n "${HW_ETHERNET_DEVICES}" ]; then
+    if [ -d ${confdir_default}/ETHERNET_DEVICES ]; then
+        for sc in $(ls ${confdir_default}/ETHERNET_DEVICES);do
+            bash $dir/$sc ${HW_ETHERNET_DEVICES}
+        done
+    fi
+fi
+
+if [ -n "${HW_CAN_DEVICES}" ]; then
+    if [ -d ${confdir_default}/CAN_DEVICES ]; then
+        for sc in $(ls ${confdir_default}/CAN_DEVICES);do
+            bash $dir/$sc ${HW_CAN_DEVICES}
+        done
+    fi
+fi
+
+if [ -n "${HW_WIFI_DEVICES}" ]; then
+    if [ -d ${confdir_default}/WIFI_DEVICES ]; then
+        for sc in $(ls ${confdir_default}/WIFI_DEVICES);do
+            bash $dir/$sc ${HW_WIFI_DEVICES}
+        done
+    fi
+fi
