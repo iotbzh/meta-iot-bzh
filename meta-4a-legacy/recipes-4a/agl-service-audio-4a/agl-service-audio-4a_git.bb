@@ -40,6 +40,17 @@ sed -i -e 's|--name afbd-agl-\(.*\)|--name afbd-4a-\1|' $svcfile
 # workaround for SPEC-1762
 sed -i -e 's|/usr/bin/afb-daemon\>|/usr/bin/4a_wait_bt.sh &|' $svcfile
 
+# workaround configfs smack issues (avirt)
+sed -i \
+	-e 's|^\(SmackProcessLabel\)=\(.*\)$|#SDX040719-configfs-fix \1=\2\n\1=System|' \
+	-e 's|^\(User\)=\(.*\)$|#SDX040719-configfs-fix \1=\2\n\1=root|' \
+	-e 's|^\(Group\)=\(.*\)$|#SDX040719-configfs-fix \1=\2\n\1=root|' \
+	-e 's|^\(CapabilityBoundingSet=.*\)$|#SDX040719-configfs-fix \1|' \
+	-e 's|^\(AmbientCapabilities=.*\)$|#SDX040719-configfs-fix \1|' \
+	$svcfile
+
+/var/local/lib/systemd/system/afm-service-agl-service-audio-4a--1.0-e0dc747-dirty--main.service
+
 echo "-- TMP 4A INSTALL FIX END"
 
 EOF
