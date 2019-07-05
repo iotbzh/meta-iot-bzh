@@ -7,6 +7,7 @@ LICENSE = "GPL-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/GPL-2.0;md5=801f80980d171dd6425610833a22dbe6"
 
 SRC_URI = "git://gerrit.automotivelinux.org/gerrit/src/libavirt;protocol=https;branch=${AGL_BRANCH}"
+SRC_URI += "file://0001-avirt-config-add-strerror-errno-outputs-in-error-mes.patch"
 SRCREV = "379ea3c132f53eb6f5cf26d1c8a5ca335eb32a2e"
 
 PV = "0.1+git${SRCPV}"
