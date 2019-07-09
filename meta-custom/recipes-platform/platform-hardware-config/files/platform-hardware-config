@@ -7,22 +7,29 @@ MYNAME=$(basename $BASH_SOURCE)
 confdir_default=$(cd $(dirname $(realpath $BASH_SOURCE)) && pwd -P)
 
 function info() { echo "$(basename $BASH_SOURCE) - $@" >&2; }
+function warning() { echo "$(basename $BASH_SOURCE) - WARNING: $@" >&2; }
 function error() { echo "$(basename $BASH_SOURCE) - ERROR: $@" >&2; }
 
-source /etc/platform-info/hardware
+HWINFO=/etc/platform-info/hardware
+
+[[ ! -f $HWINFO ]] && { error "Unable to find $HWINFO"; exit 1; }
+
+. $HWINFO || { error "Unable to source $HWINFO"; exit 2; }
  
 # --------------------------------------------------------------
 
-
 LISTDIR="${confdir_default}/COMMON"
-if [ -n "${HW_CPU_ARCH}" ];         then LISTDIR="${LISTDIR} ${confdir_default}/CPU_ARCH/${HW_CPU_ARCH}" ;fi
-if [ -n "${HW_SOC_VENDOR}" ];   then LISTDIR="${LISTDIR} ${confdir_default}/SOC_VENDOR/${HW_SOC_VENDOR}" ;fi
-if [ -n "${HW_BOARD_MODEL}" ];then LISTDIR="${LISTDIR} ${confdir_default}/BOARD_MODEL/${HW_BOARD_MODEL}" ;fi
+
+for key in CPU_ARCH SOC_VENDOR BOARD_MODEL; do
+	hwkey="HW_$key"
+	[[ -z "${!hwkey}" ]] && { warning "$hwkey is not set - please check $HWINFO"; continue; }
+	LISTDIR="${LISTDIR} ${confdir_default}/$key/${!hwkey}"
+done
 
 for dir in $LISTDIR; do
-	if [ -d $dir ]; then
+	[[ -d $dir ]] && {
 		for sc in $(ls $dir);do
 			bash $dir/$sc
 		done
-	fi
+	}
 done
