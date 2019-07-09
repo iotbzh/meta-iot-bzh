@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Copyright (C) 2018-2019 
+#		Stephane Desneux <stephane.desneux@iot.bzh>
+#		Ronan Le Martret <ronan.lemartret@iot.bzh>
+# Released under the Apache 2.0 license
+
 detect_netifaces() {
 	[[ ! -d /sys/class/net ]] && { error "Unable to find /sys/class/net"; return 1; }
 

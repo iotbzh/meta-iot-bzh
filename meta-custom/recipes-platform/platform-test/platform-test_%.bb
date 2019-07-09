@@ -1,3 +1,8 @@
+# Copyright (C) 2018-2019 
+#		Stephane Desneux <stephane.desneux@iot.bzh>
+#		Ronan Le Martret <ronan.lemartret@iot.bzh>
+# Released under the Apache 2.0 license
+
 SUMMARY = "Basic hardware tests for different platforms"
 DESCRIPTION = "Test hardware on different platforms."
 HOMEPAGE = "https://github.com/iotbzh/meta-iot-bzh/tree/master/meta-agl-early/recipes-core/platform-test"

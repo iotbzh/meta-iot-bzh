@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Copyright (C) 2018-2019 
+#		Stephane Desneux <stephane.desneux@iot.bzh>
+#		Ronan Le Martret <ronan.lemartret@iot.bzh>
+# Released under the Apache 2.0 license
+
 detect_renesas() {
 	[[ ! "$(cat /sys/devices/soc0/family)" =~ ^R-Car ]] && return 0;
 	info "R-Car SoC family detected."

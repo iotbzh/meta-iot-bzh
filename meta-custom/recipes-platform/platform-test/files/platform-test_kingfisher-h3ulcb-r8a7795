@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Copyright (C) 2018-2019 
+#		Stephane Desneux <stephane.desneux@iot.bzh>
+#		Ronan Le Martret <ronan.lemartret@iot.bzh>
+# Released under the Apache 2.0 license
+
 for t in BT_HCI CAN Ethernet GPS HDMI IIO Radio USB Wifi; do
 	script=tests/test-$t
 	bash -e $script || echo "FAIL: invalid test script $script"
