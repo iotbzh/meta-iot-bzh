@@ -39,7 +39,7 @@ Before=systemd-modules-load.service
 
 [Service]
 Type=oneshot
-ExecStart=${BASEDIR}/platform-detect --fragments-dir ${BASEDIR}/hw-detect.d  --output-file /etc/platform-info/hardware --
+ExecStart=${BASEDIR}/platform-detect --fragments-dir ${BASEDIR}/hw-detect.d --output-file /etc/platform-info/hardware --json-file /etc/platform-info/hardware.json
 
 [Install]
 WantedBy=systemd-modules-load.service

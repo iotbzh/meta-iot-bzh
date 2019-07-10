@@ -37,7 +37,7 @@ Requires=platform-hardware-config.service
 
 [Service]
 Type=oneshot
-ExecStart=${BASEDIR}/platform-detect --fragments-dir ${BASEDIR}/dev-detect.d --output-file /etc/platform-info/devices --
+ExecStart=${BASEDIR}/platform-detect --fragments-dir ${BASEDIR}/dev-detect.d --output-file /etc/platform-info/devices --json-file /etc/platform-info/devices.json
 RemainAfterExit=yes
 
 [Install]
