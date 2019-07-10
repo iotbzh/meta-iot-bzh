@@ -1,8 +1,8 @@
 # Copyright (C) 2019 Ronan Le Martret <ronan.lemartret@iot.bzh>
 # Released under the Apache 2.0 license
 
-SUMMARY     = "AGL platform hardware configuaration"
-DESCRIPTION = "Scripts used to generate hardware information in /etc/platform-info"
+SUMMARY     = "AGL platform hardware configuration"
+DESCRIPTION = "Scripts used to configure devices after harware detection in platform-hardware-info"
 HOMEPAGE    = "https://www.automotivelinux.org/"
 SECTION     = "base"
 
@@ -56,6 +56,6 @@ WantedBy=systemd-modules-load.service
 EOF
 }
 
-RDEPENDS_${PN} = "bash"
+RDEPENDS_${PN} = "bash platform-hardware-info"
 FILES_${PN} += "${systemd_system_unitdir}"
 FILES_${PN} += "${BASEDIR}"

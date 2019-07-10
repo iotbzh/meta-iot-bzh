@@ -1,8 +1,8 @@
 # Copyright (C) 2019 Ronan Le Martret <ronan.lemartret@iot.bzh>
 # Released under the Apache 2.0 license
 
-SUMMARY     = "AGL device platform detection tools"
-DESCRIPTION = "Scripts used to generate device information in /etc/platform-info"
+SUMMARY     = "AGL devices platform detection tools"
+DESCRIPTION = "Scripts used to generate devices information in /etc/platform-info"
 HOMEPAGE    = "https://www.automotivelinux.org/"
 SECTION     = "base"
 
@@ -45,7 +45,7 @@ WantedBy=multi-user.target
 EOF
 }
 
-RDEPENDS_${PN} = "bash platform-hardware-config"
+RDEPENDS_${PN} = "bash platform-hardware-info platform-hardware-config"
 RDEPENDS_${PN} = "bash"
 FILES_${PN} += "${systemd_system_unitdir}"
 FILES_${PN} += "${BASEDIR}/dev-detect.d"

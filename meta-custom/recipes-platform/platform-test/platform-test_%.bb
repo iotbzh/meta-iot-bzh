@@ -18,7 +18,7 @@ SRC_URI = "\
 
 SRC_URI[md5sum]="5717b7fcaf8b6654238853768cbfc267"
 
-RDEPENDS_${PN}  += "bash"
+RDEPENDS_${PN}  += "bash platform-hardware-info"
 RDEPENDS_${PN}-ptest += "bash platform-hardware-info"
 
 PV = "${AGLVERSION}"

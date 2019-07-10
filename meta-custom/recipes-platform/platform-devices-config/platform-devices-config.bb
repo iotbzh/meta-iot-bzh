@@ -2,7 +2,7 @@
 # Released under the Apache 2.0 license
 
 SUMMARY     = "AGL platform devices configuration"
-DESCRIPTION = "Scripts configure platform devices"
+DESCRIPTION = "Scripts to configure platform devices after detection in platform-devices-info"
 HOMEPAGE    = "https://www.automotivelinux.org/"
 SECTION     = "base"
 
@@ -50,6 +50,6 @@ WantedBy=multi-user.target
 EOF
 }
 
-RDEPENDS_${PN} = "bash"
+RDEPENDS_${PN} = "bash platform-devices-info"
 FILES_${PN} += "${systemd_system_unitdir}"
 FILES_${PN} += "${BASEDIR}"
