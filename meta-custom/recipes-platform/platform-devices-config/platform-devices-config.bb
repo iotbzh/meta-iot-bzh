@@ -18,7 +18,7 @@ SYSTEMD_SERVICE_${PN} = "${PN}.service"
 SYSTEMD_AUTO_ENABLE_${PN} = "enable"
 
 SRC_URI = "\
-    file://platform-device-config \
+    file://platform-devices-config \
 "
 
 do_install_append() {
@@ -31,19 +31,19 @@ do_install_append() {
     install -d ${D}${BASEDIR}/WIFI_DEVICES
     install -d ${D}${BASEDIR}/COMMON
 
-    install -m 0755 ${WORKDIR}/platform-device-config ${D}${BASEDIR}
+    install -m 0755 ${WORKDIR}/platform-devices-config ${D}${BASEDIR}
 
     mkdir -p ${D}${systemd_system_unitdir}/
     cat <<EOF >>${D}${systemd_system_unitdir}/${PN}.service
 [Unit]
 Description=${PN}
 DefaultDependencies=no
-After=platform-device-info.service
-Requires=platform-device-info.service
+After=platform-devices-info.service
+Requires=platform-devices-info.service
 
 [Service]
 Type=oneshot
-ExecStart=${BASEDIR}/platform-device-config
+ExecStart=${BASEDIR}/platform-devices-config
 
 [Install]
 WantedBy=multi-user.target
