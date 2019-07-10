@@ -15,6 +15,14 @@ function info() { echo "$(basename $BASH_SOURCE) - $@" >&2; }
 function warning() { echo "$(basename $BASH_SOURCE) - WARNING: $@" >&2; }
 function error() { echo "$(basename $BASH_SOURCE) - ERROR: $@" >&2; }
 
+function run_script() {
+	local sc=$1; shift
+	info "Running: $sc $@"
+	bash $sc "$@"|| error "script $sc FAILED with $?"
+	return 0
+}
+
+
 HWINFO=/etc/platform-info/hardware
 
 [[ ! -f $HWINFO ]] && { error "Unable to find $HWINFO"; exit 1; }
@@ -32,9 +40,9 @@ for key in CPU_ARCH SOC_VENDOR BOARD_MODEL; do
 done
 
 for dir in $LISTDIR; do
-	[[ -d $dir ]] && {
+	if [[ -d $dir ]]; then
 		for sc in $(ls $dir);do
-			bash $dir/$sc
+			run_script $dir/$sc
 		done
-	}
+	fi
 done

@@ -15,6 +15,13 @@ function info() { echo "$(basename $BASH_SOURCE) - $@" >&2; }
 function warning() { echo "$(basename $BASH_SOURCE) - WARNING: $@" >&2; }
 function error() { echo "$(basename $BASH_SOURCE) - ERROR: $@" >&2; }
 
+function run_script() {
+	local sc=$1; shift
+	info "Running: $sc $@"
+	bash $sc "$@"|| error "script $sc FAILED with $?"
+	return 0
+}
+
 DEVINFO=/etc/platform-info/devices
 
 [[ ! -f $DEVINFO ]] && { error "Unable to find $DEVINFO"; exit 1; }
@@ -24,18 +31,17 @@ DEVINFO=/etc/platform-info/devices
 # --------------------------------------------------------------
 
 [[ -d ${confdir_default}/COMMON ]] && {
-    for sc in $(ls ${confdir_default}/COMMON);do
-        bash $dir/$sc
-    done
+	for sc in $(ls ${confdir_default}/COMMON);do
+		run_script $dir/$sc
+	done
 }
 
 for key in BLUETOOTH_DEVICES ETHERNET_DEVICES CAN_DEVICES WIFI_DEVICES; do
 	hwkey="HW_$key"
-	[[ -d ${confdir_default}/$key ]] && 
-	[[ -n "${!hwkey}" ]] && {
+	if [[ -d ${confdir_default}/$key && -n "${!hwkey}" ]]; then
 		for sc in $(ls ${confdir_default}/COMMON);do
-			bash $dir/$sc ${!hwkey}
+			run_script $dir/$sc ${!hwkey}
 		done
-	}
+	fi
 done
 
