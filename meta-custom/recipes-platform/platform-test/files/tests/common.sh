@@ -6,6 +6,7 @@
 # Released under the Apache 2.0 license
 
 . /etc/platform-info/hardware
+. /etc/platform-info/devices
 
 # example for h3ulcb+kf:
 # HW_CPU_COUNT=8

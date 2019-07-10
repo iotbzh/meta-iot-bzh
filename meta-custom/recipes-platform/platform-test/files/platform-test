@@ -24,6 +24,7 @@ fi
 
 # source hw definitions
 . /etc/platform-info/hardware
+. /etc/platform-info/devices
 
 cd $BASEDIR
 
