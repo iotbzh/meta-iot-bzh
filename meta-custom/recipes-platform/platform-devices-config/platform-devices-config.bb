@@ -1,8 +1,8 @@
 # Copyright (C) 2018 Stephane Desneux <stephane.desneux@iot.bzh>
 # Released under the Apache 2.0 license
 
-SUMMARY     = "AGL platform device configuaration"
-DESCRIPTION = "Scripts used to generate hardware information in /etc/platform-info"
+SUMMARY     = "AGL platform devices configuration"
+DESCRIPTION = "Scripts configure platform devices"
 HOMEPAGE    = "https://www.automotivelinux.org/"
 SECTION     = "base"
 
