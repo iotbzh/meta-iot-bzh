@@ -1,0 +1,16 @@
+diff --git a/configs/r8a7796_ulcb_defconfig b/configs/r8a7796_ulcb_defconfig
+index ac4b5ba893..1d4704fbd8 100644
+--- a/configs/r8a7796_ulcb_defconfig
++++ b/configs/r8a7796_ulcb_defconfig
+@@ -65,3 +72,11 @@ CONFIG_USB_EHCI_GENERIC=y
+ CONFIG_USB_STORAGE=y
+ CONFIG_OF_LIBFDT_OVERLAY=y
+ CONFIG_SMBIOS_MANUFACTURER=""
++CONFIG_PCI=y
++CONFIG_NVME=y
++CONFIG_DM_PCI=y
++CONFIG_SYS_PROMPT="8===D "
++CONFIG_CMD_CONFIG=y
++CONFIG_CMD_GREPENV=y
++CONFIG_CMD_ENV_CALLBACK=y
++CONFIG_CMD_ENV_FLAGS=y
