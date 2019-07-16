@@ -19,4 +19,6 @@ GO_INSTALL = "${GO_IMPORT}/cmd/promtail"
 
 inherit go
 
+DEPENDS = "systemd"
+
 RDEPENDS_${PN}-dev += "bash dumb-init"
