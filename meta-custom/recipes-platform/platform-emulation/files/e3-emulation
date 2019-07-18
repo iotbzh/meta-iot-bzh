@@ -1,0 +1,125 @@
+#!/bin/sh
+
+vMAJOR=0
+vMINOR=1
+
+VERSION=${vMAJOR}.${vMINOR}
+
+SCRIPT=$(basename $BASH_SOURCE)
+
+rd='\e[0;31m'
+gr='\e[0;32m'
+yl='\e[0;33m'
+bl='\e[0;34m'
+nc='\e[0m' # no color
+
+HW_DATA_PATH=/etc/platform-info/hardware
+BUILD_DATA_PATH=/etc/platform-info/build
+
+[[ ! -f $HW_DATA_PATH ]] && echo -ne "\n$yl Warning: Could not find harware information: $nc$HW_DATA_PATH$yl is missing.$nc\n"
+[[ ! -f $BUILD_DATA_PATH ]] && echo -ne "\n$yl Warning: Could not find build information: $nc$BUILD_DATA_PATH$yl is missing.$nc\n"
+source $HW_DATA_PATH &> /dev/null
+source $BUILD_DATA_PATH &> /dev/null
+
+CPU_NB_ONLINE_CORE=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l) && [[ ! $CPU_NB_ONLINE_CORE ]] && CPU_NB_ONLINE_CORE="0"
+CPU_MAX_CORE=$HW_CPU_COUNT && [[ ! $CPU_MAX_CORE ]] && CPU_MAX_CORE="0"
+
+error()
+{
+	echo -e "${rd}ERROR: $@${nc}"
+}
+
+#Only OK for m3ulcb
+cpu_info()
+{
+	echo "Summary :"
+	for n in `seq 0 $(($CPU_MAX_CORE-1))`;
+	do
+		if [ `cat /sys/devices/system/cpu/cpu$n/online` == "0" ]
+		then
+			echo -e " cpu$n : ${rd}Disabled${nc}"
+		else
+			if [ $n -lt 2 ]
+			then
+				freq=$((`cat /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq`/1000))
+			else
+				freq=$((`cat /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_cur_freq`/1000))
+			fi
+			
+			echo -e " cpu$n : $freq MHz" 
+		fi
+	done
+}
+
+cpu_downgrade()
+{
+	if [ $DIST_MACHINE == "m3ulcb" ]
+	then
+		echo 0 > /sys/devices/system/cpu/cpu1/online
+		echo 0 > /sys/devices/system/cpu/cpu3/online
+		echo 0 > /sys/devices/system/cpu/cpu4/online
+		echo 0 > /sys/devices/system/cpu/cpu5/online
+
+		echo 1000000 > /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq
+		echo 1000000 > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq
+		echo 1200000 > /sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq
+		echo 1200000 > /sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq
+		
+		/usr/libexec/platform-e3-emulation/tools.d/nop_loop.sh &
+		echo $! > /tmp/pid_nop_loop
+		/usr/libexec/platform-e3-emulation/tools.d/nop_loop.sh &
+		echo " $!" >> /tmp/pid_nop_loop
+		
+		cpu_info
+	elif [ $DIST_MACHINE == "h3ulcb" ]
+	then
+		echo "TODO"
+	else
+		error "Machine '$DIST_MACHINE' is not supported."
+	fi
+}
+
+cpu_upgrade()
+{
+	if [ $DIST_MACHINE == "m3ulcb" ]
+	then
+		kill `cat /tmp/pid_nop_loop` &> /dev/null
+		
+		echo 1 > /sys/devices/system/cpu/cpu1/online
+		echo 1 > /sys/devices/system/cpu/cpu3/online
+		echo 1 > /sys/devices/system/cpu/cpu4/online
+		echo 1 > /sys/devices/system/cpu/cpu5/online
+		
+		echo `cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies | cut -d' ' -f1` > /sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq
+		echo `cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies | cut -d' ' -f3` > /sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq
+		echo `cat /sys/devices/system/cpu/cpufreq/policy2/scaling_available_frequencies | cut -d' ' -f1` > /sys/devices/system/cpu/cpufreq/policy2/scaling_min_freq
+		echo `cat /sys/devices/system/cpu/cpufreq/policy2/scaling_available_frequencies | cut -d' ' -f3` > /sys/devices/system/cpu/cpufreq/policy2/scaling_max_freq
+		
+		cpu_info
+	elif [ $DIST_MACHINE == "h3ulcb" ]
+	then
+		echo "TODO"
+	else
+		error "Machine '$DIST_MACHINE' is not supported."
+	fi
+}
+
+grep emul_e3=yes /proc/cmdline &> /dev/null
+if [ $? == "0" ]
+then
+	if [ "$1" == "start" ]
+	then
+		echo "Strating E3 emulation..."
+		cpu_downgrade $DIST_MACHINE
+	elif [ "$1" == "stop" ]
+	then
+		echo "Stopping E3 emulation..."
+		cpu_upgrade $DIST_MACHINE
+	else
+		error "use \"start\" or \"stop\" as arg to use this script."
+		exit 1
+	fi
+else
+	echo "E3 emulation not requested."
+fi
+
