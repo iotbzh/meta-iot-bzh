@@ -1,0 +1,141 @@
+#!/bin/bash
+
+set -e
+
+# external config can be loaded (if  any)
+SCRIPT=$(basename $BASH_SOURCE)
+
+stdout_in_terminal=0
+[[ -t 1 ]] && stdout_in_terminal=1
+
+function color {
+	[[ $stdout_in_terminal == 0 ]] && return
+	for k in $*; do
+		case $k in
+			bold) tput bold 2>/dev/null;;
+			none) tput sgr0 2>/dev/null;;
+			*) tput setaf $k 2>/dev/null;;
+		esac
+	done
+}
+
+color_white=$(color bold 7)
+color_green=$(color bold 2)
+color_yellow=$(color bold 3)
+color_red=$(color bold 1)
+color_blue=$(color bold 4)
+color_gray=$(color 250)
+color_orange=$(color 214)
+color_none=$(color none)
+
+function error() {
+	echo "${color_red}$@${color_none}" >&2
+}
+
+function fatal() {
+	error "$@"
+	exit 56 # why 56 ? Morbihan of course!
+}
+
+function warning() {
+	echo "${color_orange}$@${color_none}" >&2
+}
+
+function info() {
+	echo "${color_green}$@${color_none}" >&2
+}
+
+function setdebug() {
+	DEBUG=$1
+}
+	
+function debug() {
+	[[ "$DEBUG" -ge 1 ]] && {
+		echo "${color_gray}$@${color_none} $(where 2)" >&2
+	} || return 0
+}
+
+function log() {
+	echo "$@" >&2
+}
+
+function usage() {
+	cat <<EOF
+Usage: $SCRIPT [options] <repo_sync_list> [repo_sync_list ...]
+
+Options:
+	-t|--tempdir: use specific temp dir instead of newly created one
+	-f|--force: force push on secondary repo (DANGEROUS: this may overwrite commits on secondary)
+	-h|--help: show help
+EOF
+}
+
+HELP=false
+FORCE=false
+TEMPDIR=
+
+tmp=$(getopt -o hft: --long help,force,tempdir: -n $SCRIPT -- "$@")
+[[ $? != 0 ]] && { usage; exit 1; }
+eval set -- $tmp
+while true; do
+	case "$1" in 
+		-t|--tempdir)	TEMPDIR=$2; shift 2;;
+		-f|--force)		FORCE=true; shift;;
+		-h|--help)		HELP=true; shift;;
+		--)				shift; break;;
+		*) fatal "Internal error";;
+	esac
+done
+
+$HELP && { usage; exit 1; }
+
+[[ -z "$TEMPDIR" ]] && {
+	TEMPDIR=${TEMPDIR:-$(mktemp -d --tmpdir $SCRIPT.XXXXXXXX)}
+	trap "rm -rfv $TEMPDIR" STOP INT QUIT EXIT
+}
+[[ ! -d "$TEMPDIR" ]] && fatal "Invalid temp dir $TEMPDIR"
+log "Using temp dir $TEMPDIR"
+
+[[ -z "$@" ]] && { error "Invalid input files"; usage; exit 1; }
+
+for infile in "$@"; do
+	[[ -f $infile ]] || { error "Invalid input file $infile. Skipping..."; continue; }
+
+	sed 's/#.*$//g' < $infile | while read SRC DEST BRANCHES; do
+		[[ -z "$SRC" ]] && continue
+		[[ -z "$DEST" ]] && { error "Invalid destination repo for source repo $SRC"; continue; }
+		[[ -z "$BRANCHES" ]] && { error "Invalid branches for source repo $SRC"; continue; }
+
+		BRANCHES=$(tr ',' ' ' <<<$BRANCHES)
+
+		info "---------- $SRC -> $DEST [$BRANCHES] -----------"
+
+		pushd $TEMPDIR >/dev/null
+			gitok=false
+			gitdir=$(basename $DEST)
+			[[ -d $gitdir ]] && {
+				pushd $gitdir >/dev/null
+				log "fetching ..."
+				git fetch -p origin && gitok=true
+			} || {
+				git clone --mirror $SRC $gitdir && gitok=true
+				pushd $gitdir >/dev/null
+				git remote add --mirror=fetch secondary $DEST
+			}
+
+				log "checking origin ..."
+				[[ "$(git remote get-url origin)" != "$SRC" ]] && { error "origin doesn't match source URL"; continue; }
+				$gitok || { error "fetch failed"; continue; }
+
+				opts=""
+				msg="some commit pushed on secondary $DEST"
+				$FORCE && { warning "--force option enabled"; opts="-f"; msg="check if branch is protected on $DEST"; }
+				for branch in $BRANCHES; do
+					log "syncing branch $branch... "
+					git push --follow-tags $opts secondary $branch:$branch  && info "$branch OK" || error "$branch FAIL ($msg)"
+				done
+			popd >/dev/null
+		popd >/dev/null
+	done
+
+done

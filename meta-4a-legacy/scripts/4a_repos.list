@@ -1,0 +1,15 @@
+# source_repo         destination_repo           branches_to_copy
+
+https://git.automotivelinux.org/apps/agl-service-audio-4a    git@git.ovh.iot:4a-legacy/agl-service-audio-4a    master,guppy,halibut
+
+https://git.automotivelinux.org/src/4a-hal-generic           git@git.ovh.iot:4a-legacy/4a-hal-generic          master,guppy,halibut
+https://git.automotivelinux.org/src/4a-hal-configs           git@git.ovh.iot:4a-legacy/4a-hal-configs          master,guppy,halibut
+https://git.automotivelinux.org/src/4a-hal-unicens           git@git.ovh.iot:4a-legacy/4a-hal-unicens          master,guppy,halibut
+https://git.automotivelinux.org/src/4a-softmixer             git@git.ovh.iot:4a-legacy/4a-softmixer            master,guppy,halibut
+https://git.automotivelinux.org/src/4a-alsa-core             git@git.ovh.iot:4a-legacy/4a-alsa-core            master,guppy,halibut
+https://git.automotivelinux.org/src/4a-tools                 git@git.ovh.iot:4a-legacy/4a-tools                master,halibut
+
+https://git.automotivelinux.org/apps/mixer                   git@git.ovh.iot:4a-legacy/mixer                   master,guppy,halibut
+https://git.automotivelinux.org/apps/homescreen              git@git.ovh.iot:4a-legacy/homescreen              master,guppy,halibut
+https://git.automotivelinux.org/apps/agl-service-radio       git@git.ovh.iot:4a-legacy/agl-service-radio       master,guppy,halibut
+https://git.automotivelinux.org/apps/agl-service-mediaplayer git@git.ovh.iot:4a-legacy/agl-service-mediaplayer master,guppy,halibut
