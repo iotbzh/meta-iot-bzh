@@ -1,4 +1,0 @@
-To keep it simple.
-
-Just expose 4A_HAL_LIST as-is to conf/local.conf so the user can actually choose any json file.
-

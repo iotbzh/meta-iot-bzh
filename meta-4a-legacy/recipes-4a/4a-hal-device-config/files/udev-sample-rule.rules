@@ -1,1 +1,0 @@
-ACTION=="add", SUBSYSTEM=="usb", SOMEOTHERMATCH="bar", RUN+="/usr/bin/deploy-hal-udev.sh hal-4a-greenbox.json"
