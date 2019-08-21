@@ -9,4 +9,6 @@ IMAGE_FSTYPES_remove = "tar.gz"
 # enable support for RPI v2 camera
 KF_ENABLE_IMX219 = "1"
 
+# required for ffmpeg, gstreamer ugly plugins ...
+LICENSE_FLAGS_WHITELIST = "commercial"
 
