@@ -24,3 +24,6 @@ PREFERRED_VERSION_alsa-plugins       = "1.1.6"
 PREFERRED_VERSION_alsa-tools         = "1.1.6"
 PREFERRED_VERSION_alsa-utils         = "1.1.6"
 PREFERRED_VERSION_alsa-utils-scripts = "1.1.6"
+
+# enable avirt ?
+#DISTRO_FEATURES_append = " agl-audio-4a-with-avirt"

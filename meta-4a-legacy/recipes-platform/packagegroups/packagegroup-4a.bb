@@ -18,5 +18,5 @@ RDEPENDS_${PN} += "\
     4a-hal-generic \
     4a-hal-unicens \
     ${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', '4a-tools', '' , d)} \
-    snd-avirt \
+	${@bb.utils.contains("DISTRO_FEATURES", "agl-audio-4a-with-avirt", "snd-avirt", "",d)} \
 "
