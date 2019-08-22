@@ -8,8 +8,8 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=e385f6075dcdf3ad6ff0056fca58a129"
 
 DEPENDS += "lua libafb-helpers libappcontroller"
 
-SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-hal-unicens.git;protocol=http;branch=master"
-SRCREV = "9228c9da5b85f0fdd6b01f0309e57b846618be63"
+SRC_URI = "gitsm://git.ovh.iot/4a-legacy/4a-hal-unicens.git;protocol=http;branch=4a-legacy"
+SRCREV = "88211e8b9cb19ecec8c28c1de19e0d42dadcb916"
 
 
 PV = "0.1+git${SRCPV}"

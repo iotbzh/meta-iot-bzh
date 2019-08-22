@@ -7,7 +7,7 @@ LICENSE     = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=ae6497158920d9524cf208c09cc4c984"
 
 SRC_URI = "gitsm://git.ovh.iot/4a-legacy/mixer.git;protocol=http;branch=4a-legacy"
-SRCREV  = "0f19df88ec387747300c9da05987f794a19461cc"
+SRCREV  = "d2014b254dd3a58e34840f1f703c20f87a1d4d8f"
 
 PV = "1.0+git${SRCPV}"
 S  = "${WORKDIR}/git"
