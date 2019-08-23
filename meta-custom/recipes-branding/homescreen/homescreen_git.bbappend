@@ -7,6 +7,15 @@ SRC_URI += " \
 do_compile[nostamp] = "1"
 
 do_configure_prepend() {
-	sed -i 's|@AGLVERSIONSTRING@|AGL v${AGLVERSION}-${MACHINE} (${AGL_BRANCH}${IMAGE_VERSION_SUFFIX})|g' ${S}/homescreen/qml/images/Utility_Logo_Grey-01.svg
+	DIST_SETUP_TOPIC="<unknown topic>"
+
+	if [ -f "${DISTRO_SETUP_MANIFEST}" ]; then
+		. ${DISTRO_SETUP_MANIFEST}
+	fi
+
+	sed -i \
+		-e "s|@AGLVERSIONSTRING@|AGL v${AGLVERSION}-${MACHINE} [${DIST_SETUP_TOPIC}]|g" \
+		-e "s|@AGLVERSIONSTRING2@|(${AGL_BRANCH}${IMAGE_VERSION_SUFFIX})|g" \
+	${S}/homescreen/qml/images/Utility_Logo_Grey-01.svg
 }
 
