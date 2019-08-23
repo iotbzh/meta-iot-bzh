@@ -26,17 +26,12 @@ do_install_append() {
     BASEDIR=${libexecdir}/${PN}
     install -d ${D}${BASEDIR}/
 
-    install -d ${D}${BASEDIR}/SCRIPT
-    install -d ${D}${BASEDIR}/CPU_ARCH
-    install -d ${D}${BASEDIR}/SOC_VENDOR
-    install -d ${D}${BASEDIR}/BOARD_MODEL
-    install -d ${D}${BASEDIR}/COMMON
+    install -d ${D}${BASEDIR}/common
+    install -d ${D}${BASEDIR}/arch
+    install -d ${D}${BASEDIR}/vendor
+    install -d ${D}${BASEDIR}/board
 
     install -m 0755 ${WORKDIR}/platform-hardware-config ${D}${BASEDIR}
-    install -m 0755 ${WORKDIR}/btwilink-disable.sh ${D}${BASEDIR}/SCRIPT
-
-    install -d  ${D}${BASEDIR}/SOC_VENDOR/Renesas
-    ln -s ${BASEDIR}/SCRIPT/btwilink-disable.sh ${D}${BASEDIR}/SOC_VENDOR/Renesas/btwilink-disable.sh
 
     mkdir -p ${D}${systemd_system_unitdir}/
     cat <<EOF >>${D}${systemd_system_unitdir}/${PN}.service
@@ -54,6 +49,12 @@ ExecStart=${BASEDIR}/platform-hardware-config
 [Install]
 WantedBy=systemd-modules-load.service
 EOF
+}
+
+do_install_append() {
+	# TODO: btwilink handling should move to another package
+    install -d  ${D}${BASEDIR}/vendor/Renesas
+    install -m 0755 ${WORKDIR}/btwilink-disable.sh ${D}${BASEDIR}/vendor/Renesas
 }
 
 RDEPENDS_${PN} = "bash platform-hardware-info"

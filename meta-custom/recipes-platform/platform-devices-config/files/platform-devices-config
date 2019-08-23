@@ -30,16 +30,25 @@ DEVINFO=/etc/platform-info/devices
  
 # --------------------------------------------------------------
 
-[[ -d ${confdir_default}/COMMON ]] && {
-	for sc in $(ls ${confdir_default}/COMMON);do
+# run all scripts in 'common'
+[[ -d ${confdir_default}/common ]] && {
+	for sc in $(ls ${confdir_default}/common);do
 		run_script $dir/$sc
 	done
 }
 
-for key in BLUETOOTH_DEVICES ETHERNET_DEVICES CAN_DEVICES WIFI_DEVICES; do
+# keys are defined in /etc/platform-info/devices
+CATEGORIES="\
+   BLUETOOTH_DEVICES \
+   ETHERNET_DEVICES \
+   CAN_DEVICES \
+   WIFI_DEVICES \
+"
+for key in $CATEGORIES; do
 	hwkey="HW_$key"
+	dirname=${key,,} # lowercase
 	if [[ -d ${confdir_default}/$key && -n "${!hwkey}" ]]; then
-		for sc in $(ls ${confdir_default}/COMMON);do
+		for sc in $(ls ${confdir_default}/$dirname);do
 			run_script $dir/$sc ${!hwkey}
 		done
 	fi

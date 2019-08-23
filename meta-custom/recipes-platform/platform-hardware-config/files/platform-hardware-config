@@ -31,14 +31,31 @@ HWINFO=/etc/platform-info/hardware
  
 # --------------------------------------------------------------
 
-LISTDIR="${confdir_default}/COMMON"
+# always include 'common' dir
+LISTDIR="${confdir_default}/common"
 
-for key in CPU_ARCH SOC_VENDOR BOARD_MODEL; do
+# $HWINFO should contain some of the following keys: CPU_ARCH, SOC_VENDOR, ...
+# let's find which ones
+CATEGORIES="\
+   CPU_ARCH \
+   SOC_VENDOR \
+   BOARD_MODEL \
+"
+for key in $CATEGORIES; do
 	hwkey="HW_$key"
+
+	# map key to folder name
+	case $hwkey in
+		CPU_ARCH)		dirname=arch;;
+		SOC_VENDOR)		dirname=vendor;;
+		BOARD_MODEL)	dirname=board;;
+		*)				dirname=${key,,} # key in lowercase
+	esac
 	[[ -z "${!hwkey}" ]] && { warning "$hwkey is not set - please check $HWINFO"; continue; }
-	LISTDIR="${LISTDIR} ${confdir_default}/$key/${!hwkey}"
+	LISTDIR="${LISTDIR} ${confdir_default}/$dirname/${!hwkey}"
 done
 
+# then iterate on each found dir and run scripts inside
 for dir in $LISTDIR; do
 	if [[ -d $dir ]]; then
 		for sc in $(ls $dir);do

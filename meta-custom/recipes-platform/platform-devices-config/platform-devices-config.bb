@@ -25,11 +25,11 @@ do_install_append() {
     BASEDIR=${libexecdir}/${PN}
     install -d ${D}${BASEDIR}/
 
-    install -d ${D}${BASEDIR}/BLUETOOTH_DEVICES
-    install -d ${D}${BASEDIR}/ETHERNET_DEVICES
-    install -d ${D}${BASEDIR}/CAN_DEVICES
-    install -d ${D}${BASEDIR}/WIFI_DEVICES
-    install -d ${D}${BASEDIR}/COMMON
+    install -d ${D}${BASEDIR}/common
+    install -d ${D}${BASEDIR}/bluetooth_devices
+    install -d ${D}${BASEDIR}/ethernet_devices
+    install -d ${D}${BASEDIR}/can_devices
+    install -d ${D}${BASEDIR}/wifi_devices
 
     install -m 0755 ${WORKDIR}/platform-devices-config ${D}${BASEDIR}
 
