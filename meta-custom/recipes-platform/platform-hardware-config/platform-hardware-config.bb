@@ -20,6 +20,7 @@ SYSTEMD_AUTO_ENABLE_${PN} = "enable"
 SRC_URI = "\
     file://btwilink-disable.sh \
     file://platform-hardware-config \
+    file://pregistry \
 "
 
 do_install_append() {
@@ -32,6 +33,9 @@ do_install_append() {
     install -d ${D}${BASEDIR}/board
 
     install -m 0755 ${WORKDIR}/platform-hardware-config ${D}${BASEDIR}
+
+    install -d ${D}${bindir}
+    install -m 0755 ${WORKDIR}/pregistry ${D}${bindir}
 
     mkdir -p ${D}${systemd_system_unitdir}/
     cat <<EOF >>${D}${systemd_system_unitdir}/${PN}.service
