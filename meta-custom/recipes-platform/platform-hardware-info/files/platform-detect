@@ -193,12 +193,11 @@ done
 function __generate_output() {
 	fmt=$1
 
-	# force $HW_CPU_ARCH $HW_SOC_VENDOR and $HW_BOARD_MODEL to be defined and lowercase
+	# force $HW_CPU_ARCH $HW_SOC_VENDOR and $HW_BOARD_MODEL to be lowercase (if defined)
 	# these values are used by platform-hardware-config to run some scriptlets conditionnaly
 	# to arch, vendor and board model.
 	for x in cpu_arch soc_vendor board_model; do
-		[[ -z "${__keys[$x]}" ]] && __keys[$x]="unknown"
-		__keys[$x]=${__keys[$x],,}
+		[[ -n "${__keys[$x]}" ]] && __keys[$x]=${__keys[$x],,}
 	done
 	
 	for x in ${!__keys[@]}; do

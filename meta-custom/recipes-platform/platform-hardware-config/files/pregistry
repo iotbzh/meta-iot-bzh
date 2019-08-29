@@ -13,6 +13,7 @@ FULLHELP=false
 DUMP_ALL=false
 DUMP_KEYS=false
 GLOBAL_CONFIG=/etc/platform-config
+GLOBAL_CONFIG_DIR=${GLOBAL_CONFIG}.d
 HW_INFO=/etc/platform-info/hardware
 EXTRA_CONFIG=
 CONFIG_PREFIX="agl"
@@ -46,6 +47,7 @@ EOF
 	cat <<EOF >&2
 Default configuration files are:
    $GLOBAL_CONFIG
+   $GLOBAL_CONFIG_DIR/*
    kernel command line options starting by '$CONFIG_PREFIX.'
 
 Configuration file syntax:
@@ -159,6 +161,12 @@ $HELP && { usage $FULLHELP; exit 1; }
 	debug "loading global config from $GLOBAL_CONFIG"
 	parse_config <$GLOBAL_CONFIG
 }
+
+# load all files in GLOBAL_CONFIG_DIR
+for x in $(find $GLOBAL_CONFIG_DIR -type f -maxdepth 1 | sort); do
+	debug "loading config from $x"
+	parse_config <$x
+done
 
 # also parse kernel command line
 debug "Loading config from kernel command line"

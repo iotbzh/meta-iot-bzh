@@ -1,4 +1,6 @@
-# Copyright (C) 2019 Ronan Le Martret <ronan.lemartret@iot.bzh>
+# Copyright (C) 2018-2019 
+#		Stephane Desneux <stephane.desneux@iot.bzh>
+#		Ronan Le Martret <ronan.lemartret@iot.bzh>
 # Released under the Apache 2.0 license
 
 SUMMARY     = "AGL platform hardware configuration"
@@ -18,7 +20,6 @@ SYSTEMD_SERVICE_${PN} = "${PN}.service"
 SYSTEMD_AUTO_ENABLE_${PN} = "enable"
 
 SRC_URI = "\
-    file://btwilink-disable.sh \
     file://platform-hardware-config \
     file://pregistry \
 "
@@ -53,12 +54,6 @@ ExecStart=${BASEDIR}/platform-hardware-config
 [Install]
 WantedBy=systemd-modules-load.service
 EOF
-}
-
-do_install_append() {
-	# TODO: btwilink handling should move to another package
-    install -d  ${D}${BASEDIR}/vendor/Renesas
-    install -m 0755 ${WORKDIR}/btwilink-disable.sh ${D}${BASEDIR}/vendor/Renesas
 }
 
 RDEPENDS_${PN} = "bash platform-hardware-info"
