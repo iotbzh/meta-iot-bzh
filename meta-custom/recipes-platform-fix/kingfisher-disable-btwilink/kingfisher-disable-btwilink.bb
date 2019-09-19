@@ -14,14 +14,15 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 PV = "0.1"
 
 SRC_URI = "\
-	file://btwilink-disable.sh \
+   file://btwilink-disable.sh \
 "
 
-inherit platform-hardware-script
+inherit platform-runtime-tools
 
-PLATFORM_HARDWARE_SCRIPT_IDS = "btwilink"
+PLATFORM_RUNTIME_TOOLS_IDS = "btwilink"
 
-PLATFORM_HARDWARE_SCRIPT_ADD_btwilink = "${WORKDIR}/btwilink-disable.sh"
-PLATFORM_HARDWARE_SCRIPT_WHEN_btwilink = "vendor/renesas"
-PLATFORM_HARDWARE_SCRIPT_PRIORITY_btwilink = "5"
+PLATFORM_RUNTIME_TOOLS_STEP_btwilink = "core"
+PLATFORM_RUNTIME_TOOLS_ADD_btwilink = "${WORKDIR}/btwilink-disable.sh"
+PLATFORM_RUNTIME_TOOLS_WHEN_btwilink = "vendor/renesas"
+PLATFORM_RUNTIME_TOOLS_PRIORITY_btwilink = "5"
 
