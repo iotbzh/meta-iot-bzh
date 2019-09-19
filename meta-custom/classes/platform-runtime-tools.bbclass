@@ -145,7 +145,7 @@ python do_platform_config_deploy() {
          for cond in when.split():
             dst=oe.path.join(
                classVar(d,"BASEDIR"),
-			   step,
+               step,
                cond,
                "%02d%s_%s" % (prio, fbsuffix, os.path.basename(script))
             )
