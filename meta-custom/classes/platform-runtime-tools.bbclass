@@ -45,7 +45,7 @@
 # PLATFORM_RUNTIME_TOOLS_WHEN_${PN} = "vendor/renesas"
 # PLATFORM_RUNTIME_TOOLS_PRIORITY_${PN} = "50"
 # --------------------------------------------------------------
-# This will install the script "myscript.sh" into folder /usr/libexec/pr-tools/customize/core/vendor/renesas/50_myscript.sh
+# This will install the script "myscript.sh" into folder /usr/libexec/platform-runtime-tools/customize/core/vendor/renesas/50_myscript.sh
 #
 # And a more complex example with multiple scripts:
 # --------------------------------------------------------------
@@ -71,7 +71,7 @@
 # PLATFORM_RUNTIME_TOOLS_WHEN_${PN}3 = "common"
 # PLATFORM_RUNTIME_TOOLS_PRIORITY_${PN}3 = "90"
 # --------------------------------------------------------------
-# This will end up with the following tree in /usr/libexec/pr-tools/customize/core/:
+# This will end up with the following tree in /usr/libexec/platform-runtime-tools/customize/core/:
 # .
 # ├── arch
 # │   └── x86_64
@@ -104,7 +104,7 @@
 RDEPENDS_${PN}_prepend = "platform-runtime-tools "
 
 # define basedir where scriptlets will be installed
-PLATFORM_RUNTIME_TOOLS_BASEDIR = "${libexecdir}/pr-tools"
+PLATFORM_RUNTIME_TOOLS_BASEDIR = "${libexecdir}/platform-runtime-tools"
 
 python do_platform_config_deploy() {
    import oe
