@@ -5,7 +5,7 @@
 #		Ronan Le Martret <ronan.lemartret@iot.bzh>
 # Released under the Apache 2.0 license
 
-. /etc/platform-info/hardware
+. /etc/platform-info/core
 . /etc/platform-info/devices
 
 # example for h3ulcb+kf:
