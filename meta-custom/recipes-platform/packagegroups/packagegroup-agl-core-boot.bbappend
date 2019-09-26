@@ -1,8 +1,5 @@
 RDEPENDS_${PN} += "\
-	platform-hardware-info \
-	platform-hardware-config \
-	platform-devices-info \
-	platform-devices-config \
+	platform-runtime-tools \
 	${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', 'platform-test', '' , d)} \
 "
 

@@ -8,7 +8,7 @@
 # check if btwilink must be disabled or not
 
 # query registry for 'disable-btwilink' key
-v=$(pregistry disable-btwilink)
+v=$(pr-registry disable-btwilink)
 case ${v,,} in
 	1|true|on|yes)
 		echo "$BASH_SOURCE: disabling btwilink module" >&2

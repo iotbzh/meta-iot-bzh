@@ -13,7 +13,7 @@ yl='\e[0;33m'
 bl='\e[0;34m'
 nc='\e[0m' # no color
 
-HW_DATA_PATH=/etc/platform-info/hardware
+HW_DATA_PATH=/etc/platform-info/core
 
 CPU_LOG_FILE_1=/tmp/agl-benchmark.testcpu1.log
 CPU_LOG_FILE_2=/tmp/agl-benchmark.testcpu2.log

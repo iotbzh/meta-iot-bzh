@@ -13,7 +13,8 @@ if [[ $# -gt 0 ]]; then
 	case $1 in
 		-d|--detect)
 			info "Running hardware detection" 
-			/usr/libexec/platform-hardware-info/hw-detect
+			systemctl start platform-core-detection.service
+			systemctl start platform-devices-detection.service
 			;;
 		-h|--help|*)
 			info "$0 [-h|--help] [-d|--detect]"
@@ -23,7 +24,7 @@ if [[ $# -gt 0 ]]; then
 fi
 
 # source hw definitions
-. /etc/platform-info/hardware
+. /etc/platform-info/core
 . /etc/platform-info/devices
 
 cd $BASEDIR
