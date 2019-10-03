@@ -27,3 +27,7 @@ PREFERRED_VERSION_alsa-utils-scripts = "1.1.6"
 
 # enable avirt ?
 #DISTRO_FEATURES_append = " agl-audio-4a-with-avirt"
+
+# branch to be used in 4A git repos
+4A_BRANCH = "4a-legacy"
+OVERRIDES .= ":4a-legacy"

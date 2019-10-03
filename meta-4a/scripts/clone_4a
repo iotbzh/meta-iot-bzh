@@ -105,7 +105,7 @@ for infile in "$@"; do
 			git fetch -p origin && gitok=true
 		} || {
 			log "cloning ..."
-			git clone --recurse-submodules $SRC $gitdir && gitok=true
+			git clone --recurse-submodules $DEST $gitdir && gitok=true
 			pushd $gitdir >/dev/null
 		}
 

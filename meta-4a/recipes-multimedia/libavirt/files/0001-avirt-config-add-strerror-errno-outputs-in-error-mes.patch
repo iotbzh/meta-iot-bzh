@@ -1,0 +1,63 @@
+From d8a0cfc00f945449ea17b3744d9e65e95aef0866 Mon Sep 17 00:00:00 2001
+From: Stephane Desneux <stephane.desneux@iot.bzh>
+Date: Fri, 5 Jul 2019 19:40:24 +0200
+Subject: [PATCH] avirt-config: add strerror(errno) outputs in error messages
+
+Change-Id: Ic34b7e4e6d836e4ef4c979fda1e7dbba29bb0350
+Signed-off-by: Stephane Desneux <stephane.desneux@iot.bzh>
+---
+ src/avirt-config.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/avirt-config.c b/src/avirt-config.c
+index c6cf483..72d4ba8 100644
+--- a/src/avirt-config.c
++++ b/src/avirt-config.c
+@@ -99,7 +99,7 @@
+     strcat(__path_attr, attr);                            \
+     FILE *__fd = fopen(__path_attr, "w");                 \
+     if (!__fd) {                                          \
+-      AVIRT_ERROR_V("Failed to open file at '%s'",        \
++      AVIRT_ERROR_V("Failed to open file at '%s' (%m)",   \
+                     __path_attr);                         \
+       return -EPERM;                                      \
+     }                                                     \
+@@ -120,7 +120,7 @@
+     strcat(__path_attr, attr);                            \
+     FILE *__fd = fopen(__path_attr, "r");                 \
+     if (!__fd) {                                          \
+-      AVIRT_ERROR_V("Failed to open file at '%s'",        \
++      AVIRT_ERROR_V("Failed to open file at '%s' (%m)",   \
+                     __path_attr);                         \
+       return -EPERM;                                      \
+     }                                                     \
+@@ -302,7 +302,7 @@ static int snd_avirt_configfs_item_new(const char *name,
+   err = mkdir(path, S_IRWXU | S_IRWXG | S_IRWXO);
+   if (err < 0)
+   {
+-    AVIRT_ERROR_V("Cannot create config item '%s' at directory '%s'", name, path);
++    AVIRT_ERROR_V("Cannot create config item '%s' at directory '%s' (%m)", name, path);
+     return err;
+   }
+ 
+@@ -319,7 +319,7 @@ int snd_avirt_card_index_get(int idx)
+   open_dev = open(path, O_RDONLY);
+   if (open_dev < 0)
+   {
+-    AVIRT_ERROR_V("Could not open device with path: %s", path);
++    AVIRT_ERROR_V("Could not open device with path: %s (%m)", path);
+     err = -ENODEV;
+     goto exit_dev;
+   }
+@@ -462,7 +462,7 @@ static int snd_avirt_stream_reset_all()
+       err = rmdir(path);
+       if (err < 0)
+       {
+-        AVIRT_ERROR_V("Cannot remove config item '%s' at directory '%s'", dir->d_name, path);
++        AVIRT_ERROR_V("Cannot remove config item '%s' at directory '%s' (%m)", dir->d_name, path);
+         return err;
+       }
+     }
+-- 
+2.16.4
+

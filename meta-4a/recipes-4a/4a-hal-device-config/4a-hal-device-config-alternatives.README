@@ -1,0 +1,3 @@
+This is a sample on how the update-alternative system can be used to select
+the highest priority hal given.
+Downside ... always only one file is possible in the etc folder. No HAL_LIST.

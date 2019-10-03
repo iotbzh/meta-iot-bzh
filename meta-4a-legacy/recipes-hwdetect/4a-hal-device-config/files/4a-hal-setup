@@ -13,7 +13,7 @@ function autodetect() {
 		# try to detect the greenbox
 
 		# kingfisher detection
-		. /etc/platform-info/hardware			|| return 0
+		. /etc/platform-info/core			|| return 0
 
 		if [[ "$HW_SOC_FAMILY" =~ "R-Car Gen3" ]]; then
 			info "autodetect(): found SOC family $HW_SOC_FAMILY"
