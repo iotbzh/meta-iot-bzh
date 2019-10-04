@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 SRC_URI = "gitsm://git.ovh.iot/4a/4a-alsa-core.git;protocol=http;branch=${4A_BRANCH}"
 SRCREV = "${AUTOREV}"
 
-DEPENDS += "libafb-helpers"
+DEPENDS += "libafb-helpers liburcu"
 
 PV = "0.1+git${SRCPV}"
 S  = "${WORKDIR}/git"
