@@ -26,3 +26,4 @@ PLATFORM_RUNTIME_TOOLS_ADD_btwilink = "${WORKDIR}/btwilink-enable.sh"
 PLATFORM_RUNTIME_TOOLS_WHEN_btwilink = "vendor/renesas"
 PLATFORM_RUNTIME_TOOLS_PRIORITY_btwilink = "5"
 
+RDEPENDS_${PN} += "bash"
