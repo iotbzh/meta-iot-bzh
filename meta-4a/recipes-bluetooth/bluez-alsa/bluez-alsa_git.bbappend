@@ -13,6 +13,9 @@
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=88dc1c98120259ae67b82222d7aff5c1"
+SRCREV = "862a4b2cfd432444d62c00ee1394f6abd1433063"
+
 SRC_URI += "file://0001-build-and-link-with-a-shared-library.patch"
 SRC_URI += "file://0002-log-add-calling-function-name.patch"
 SRC_URI += "file://0003-dbus-request-a-name-on-startup.patch"
