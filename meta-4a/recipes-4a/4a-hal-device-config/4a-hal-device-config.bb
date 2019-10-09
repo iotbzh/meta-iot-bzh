@@ -28,8 +28,8 @@ do_compile[noexec] = "1"
 4A_HAL_LIST ??= "2ch-generic-usb"
 
 # for specific machines, activate only known HALs
-4A_HAL_LIST_m3ulcb          ?= "rcar-m3 rcar-m3kf"
-4A_HAL_LIST_h3ulcb          ?= "rcar-m3 rcar-m3kf"
+4A_HAL_LIST_m3ulcb          ?= "rcar-m3"
+4A_HAL_LIST_h3ulcb          ?= "rcar-m3"
 4A_HAL_LIST_intel-corei7-64 ?= "intel-minnow intel-upsquared-hdmi"
 4A_HAL_LIST_qemux86-64      ?= "intel-qemu"
 
