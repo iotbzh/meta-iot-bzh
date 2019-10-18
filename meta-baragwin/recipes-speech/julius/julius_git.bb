@@ -29,4 +29,4 @@ PACKAGECONFIG ??= "\
    alsa \
 "
 
-PACKAGECONFIG[alsa] = "-Dmictype=alsa,,alsa-lib"
+PACKAGECONFIG[alsa] = "-Dlibsent:mictype=alsa,,alsa-lib"
