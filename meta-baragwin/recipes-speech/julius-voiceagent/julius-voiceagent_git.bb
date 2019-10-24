@@ -6,15 +6,25 @@ SECTION     = "multimedia"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=86d3f3a95c324c9479bd8986968f4327"
 
-SRC_URI = "gitsm://github.com/iotbzh/julius;protocol=https;branch=master"
+SRC_URI = "gitsm://git.ovh.iot/speech/julius-voiceagent.git;protocol=http;branch=master"
 SRCREV = "${AUTOREV}"
 
 PV = "0.1+git${SRCPV}"
 S  = "${WORKDIR}/git"
 
-inherit afb-system-cmake
+inherit afb-system-cmake aglwgt
+
+OECMAKE_GENERATOR = "Unix Makefiles"
 
 DEPENDS += "\
-   julius
+   libappcontroller \
+   libafb-helpers \
+   julius \
 "
+
+#### HACK, the rate conversion and mono donwmix are not implemented by 4a yet #####
+do_install_append() {
+	install -d ${D}/etc/
+	install ${S}/src/plugins/julius/conf/asound.conf ${D}/etc/
+}
 

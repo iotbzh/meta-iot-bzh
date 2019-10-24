@@ -21,6 +21,7 @@ S  = "${WORKDIR}/git"
 inherit meson pkgconfig
 
 DEPENDS += "\
+   libedit \
    libsndfile1 \
    zlib \
 "
@@ -30,3 +31,11 @@ PACKAGECONFIG ??= "\
 "
 
 PACKAGECONFIG[alsa] = "-Dlibsent:mictype=alsa,,alsa-lib"
+
+RDEPENDS_${PN} += "perl"
+
+FILES_${PN} += "${INSTALL_PREFIX}/yomi2voca.pl"
+FILES_${PN} += "${INSTALL_PREFIX}/mkdfa.pl"
+FILES_${PN} += "${INSTALL_PREFIX}/mkdfa.py"
+FILES_${PN} += "${INSTALL_PREFIX}/gram2sapixml.pl"
+
