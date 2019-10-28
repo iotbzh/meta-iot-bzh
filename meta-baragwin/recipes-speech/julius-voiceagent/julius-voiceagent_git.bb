@@ -22,9 +22,18 @@ DEPENDS += "\
    julius \
 "
 
-#### HACK, the rate conversion and mono donwmix are not implemented by 4a yet #####
+RDEPENDS_${PN} += "python"
+
+#### HACK, the rate conversion and mono donwmix are not implemented by 4a yet,
+#### This is done through asound.conf #####
+
+RPROVIDES_${PN} += "VIRTUAL-RUNTIME_alsa-state"
+
 do_install_append() {
 	install -d ${D}/etc/
 	install ${S}/src/plugins/julius/conf/asound.conf ${D}/etc/
+
+	install -d ${D}${bindir}
+	install -m 0755 ${S}/src/plugins/julius/tools/prevoca2voca.py ${D}${bindir}/
 }
 
