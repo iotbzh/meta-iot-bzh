@@ -5,12 +5,6 @@ DISTRO_FEATURES_append = " agl-audio-4a-framework "
 DISTRO_FEATURES_remove = "pipewire"
 DISTRO_FEATURES_remove = "pulseaudio"
 
-# asound.conf is provided by the 4a-hal-config (and not by asound.state)
-#VIRTUAL-RUNTIME_alsa-state = "4a-hal-config"
-VIRTUAL_RUNTIME_alsa-state = ""
-# additionally there is a bug in alsa-utils-alsactl where it pulls in alsa-state directly
-RRECOMMENDS_pn-alsa-utils-alsactl = "VIRTUAL-RUNTIME_alsa-state"
-
 # why should a config package have -dev ... I'll leave that answer to you.
 PACKAGES_pn-alsa-state_remove = "alsa-state-dev"
 PACKAGES_pn-alsa-state_remove = "alsa-states-dev"
