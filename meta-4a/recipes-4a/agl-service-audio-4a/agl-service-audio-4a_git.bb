@@ -32,6 +32,9 @@ sed -i '/\[Unit\]/ a Before=pulseaudio.service' $svcfile;
 sed -i '/\[Unit\]/ a ConditionPathExistsGlob=/dev/snd/control*' $svcfile;
 sed -i '/\[Service\]/ a Environment=LIBASOUND_THREAD_SAFE=0' $svcfile;
 
+# load module snd-aloop with 5 cards (2 devices/card, 8 subdevices/device) => 80 subdevices available
+sed -i '/\[Service\]/ a ExecStartPre=modprobe snd-aloop enable=1,1,1,1,1 index=10,11,12,13,14' $svcfile;
+
 sed -i -e 's|/usr/bin/afb-daemon\>|& --ldpath=/usr/libexec/agl/4a-alsa-core/lib:/usr/libexec/agl/4a-hal/lib:/usr/libexec/agl/smixer/lib|' $svcfile
 
 # binder name matters: it must match "afbd-4a-*" => the config file (controller json file) that will be searched will be "policy-4a-*.json"
