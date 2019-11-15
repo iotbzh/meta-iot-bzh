@@ -12,6 +12,7 @@ RDEPENDS_${PN} += "\
     4a-alsa-core \
     agl-service-audio-4a \
     agl-service-unicens \
+    agl-service-unicens-controller \
     bluez-alsa \
     4a-softmixer \
     4a-hal-generic \
