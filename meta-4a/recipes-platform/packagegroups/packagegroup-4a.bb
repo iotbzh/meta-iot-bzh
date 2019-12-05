@@ -9,13 +9,13 @@ PACKAGES = "\
     "
 
 RDEPENDS_${PN} += "\
-    4a-alsa-core \
-    agl-service-audio-4a \
+    4a-alsacore \
+    4a-highlevel \
     agl-service-unicens \
     agl-service-unicens-controller \
     bluez-alsa \
-    4a-softmixer \
-    4a-hal-generic \
+    4a-mixer \
+    4a-hal \
     4a-hal-unicens \
     ${@bb.utils.contains('DISTRO_FEATURES', 'agl-devel', '4a-tools', '' , d)} \
 	${@bb.utils.contains("DISTRO_FEATURES", "agl-audio-4a-with-avirt", "snd-avirt", "",d)} \

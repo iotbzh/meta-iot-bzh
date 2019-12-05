@@ -1,12 +1,12 @@
 # source_repo         destination_repo           branches_to_copy
 
-https://git.automotivelinux.org/apps/agl-service-audio-4a    git@git.ovh.iot:4a/agl-service-audio-4a    master,guppy,halibut
+https://git.automotivelinux.org/apps/agl-service-audio-4a    git@git.ovh.iot:4a/4a-highlevel            master,guppy,halibut
 
-https://git.automotivelinux.org/src/4a-hal-generic           git@git.ovh.iot:4a/4a-hal-generic          master,guppy,halibut
+https://git.automotivelinux.org/src/4a-hal-generic           git@git.ovh.iot:4a/4a-hal                  master,guppy,halibut
 https://git.automotivelinux.org/src/4a-hal-configs           git@git.ovh.iot:4a/4a-hal-configs          master,guppy,halibut
 https://git.automotivelinux.org/src/4a-hal-unicens           git@git.ovh.iot:4a/4a-hal-unicens          master,guppy,halibut
-https://git.automotivelinux.org/src/4a-softmixer             git@git.ovh.iot:4a/4a-softmixer            master,guppy,halibut
-https://git.automotivelinux.org/src/4a-alsa-core             git@git.ovh.iot:4a/4a-alsa-core            master,guppy,halibut
+https://git.automotivelinux.org/src/4a-softmixer             git@git.ovh.iot:4a/4a-mixer                master,guppy,halibut
+https://git.automotivelinux.org/src/4a-alsa-core             git@git.ovh.iot:4a/4a-alsacore             master,guppy,halibut
 https://git.automotivelinux.org/src/4a-tools                 git@git.ovh.iot:4a/4a-tools                master,halibut
 
 https://git.automotivelinux.org/apps/mixer                   git@git.ovh.iot:4a/mixer                   master,guppy,halibut
