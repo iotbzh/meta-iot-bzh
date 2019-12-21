@@ -2,19 +2,13 @@ require julius_${PV}.inc
 
 ALLOW_EMPTY_${PN} = "1"
 
-inherit meson pkgconfig
+inherit meson native
 
 DEPENDS += "\
-   libedit \
-   libsndfile1 \
-   zlib \
 "
 
-PACKAGECONFIG ??= "\
-   alsa \
-"
-
-PACKAGECONFIG[alsa] = "-Dlibsent:mictype=alsa,,alsa-lib"
+# only build grammar tools
+MESON_SOURCEPATH = "${S}/gramtools"
 
 RDEPENDS_${PN} += "perl"
 

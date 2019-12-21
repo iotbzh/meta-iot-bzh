@@ -19,6 +19,7 @@ OECMAKE_GENERATOR = "Unix Makefiles"
 DEPENDS += "\
    libappcontroller \
    libafb-helpers \
+   julius-native \
    julius \
 "
 
