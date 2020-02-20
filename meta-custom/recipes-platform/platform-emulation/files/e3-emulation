@@ -13,7 +13,7 @@ yl='\e[0;33m'
 bl='\e[0;34m'
 nc='\e[0m' # no color
 
-HW_DATA_PATH=/etc/platform-info/hardware
+HW_DATA_PATH=/etc/platform-info/core
 BUILD_DATA_PATH=/etc/platform-info/build
 
 [[ ! -f $HW_DATA_PATH ]] && echo -ne "\n$yl Warning: Could not find harware information: $nc$HW_DATA_PATH$yl is missing.$nc\n"
