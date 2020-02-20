@@ -156,6 +156,7 @@ python do_platform_config_deploy() {
             bb.debug(1,"adding scriptlet %s to %s" % (script, absdst))
             bb.utils.mkdirhier(os.path.dirname(absdst))
             shutil.copy(script,absdst)
+            os.chmod(oe.path.join(d.getVar("D"),classVar(d,"BASEDIR")),0o755)
             os.chmod(absdst,0o755)
 
             # add to FILES for current package
