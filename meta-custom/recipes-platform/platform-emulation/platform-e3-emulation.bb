@@ -9,7 +9,7 @@ SECTION     = "base"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
-PV = "0.1.1"
+PV = "0.2"
 
 inherit systemd
 
@@ -30,9 +30,10 @@ do_install_append() {
     mkdir -p ${D}${systemd_system_unitdir}/
     cat <<EOF >>${D}${systemd_system_unitdir}/${PN}.service
 [Unit]
-Description=platform-e3-emulation
+Description=E3 emulation management service
 DefaultDependencies=no
-Before=systemd-modules-load.service
+After=systemd-modules-load.service
+ConditionPathExists=/sys/class/devfreq/devfreq0/
 
 [Service]
 Type=oneshot
@@ -41,7 +42,7 @@ ExecStop=/usr/libexec/platform-e3-emulation/e3-emulation stop
 RemainAfterExit=yes
 
 [Install]
-WantedBy=systemd-modules-load.service
+WantedBy=basic.target
 EOF
 }
 
