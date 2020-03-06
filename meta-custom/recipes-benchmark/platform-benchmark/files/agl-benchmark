@@ -1,7 +1,7 @@
 #!/bin/bash
 
 vMAJOR=0
-vMINOR=5
+vMINOR=6
 
 VERSION=${vMAJOR}.${vMINOR}
 
@@ -13,24 +13,29 @@ yl='\e[0;33m'
 bl='\e[0;34m'
 nc='\e[0m' # no color
 
+#Hardware information data to import
 HW_DATA_PATH=/etc/platform-info/core
 
+#Setup log file
 CPU_LOG_FILE_1=/tmp/agl-benchmark.testcpu1.log
 CPU_LOG_FILE_2=/tmp/agl-benchmark.testcpu2.log
 CPU_LOG_FILE_3=/tmp/agl-benchmark.testcpu3.log
 CPU_LOG_FILE_4=/tmp/agl-benchmark.testcpu4.log
 CPU_LOG_FILE_5=/tmp/agl-benchmark.testcpu5.log
-RAM_LOG_FILE=/tmp/agl-benchmark.testram.log
+RAM_LOG_FILE_W=/tmp/agl-benchmark.testram_write.log
+RAM_LOG_FILE_R=/tmp/agl-benchmark.testram_read.log
 GPU_LOG_FILE=/tmp/agl-benchmark.testgpu.log
 
-
+#CPU weight is used to smooth the results
 CPU_SCORE1_WEIGHT=2
 CPU_SCORE2_WEIGHT=8
 CPU_SCORE3_WEIGHT=20
 CPU_SCORE4_WEIGHT=1
 CPU_SCORE5_WEIGHT=1/2
-CPU_WEIGHT=45
-RAM_WEIGHT=5
+
+#Used to reduce/increase weight of a categorie
+CPU_WEIGHT=50
+RAM_WEIGHT=50
 GPU_WEIGHT=50
 WEIGHT=$(($CPU_WEIGHT+$RAM_WEIGHT+$GPU_WEIGHT))
 
@@ -83,7 +88,7 @@ else
 	VERBOSITY_LOG_TOKEN="&>"
 fi
 
-clean()
+function clean()
 {
 	[[ -f $CPU_LOG_FILE_1 ]] && rm $CPU_LOG_FILE_1
 	[[ -f $CPU_LOG_FILE_2 ]] && rm $CPU_LOG_FILE_2
@@ -91,12 +96,13 @@ clean()
 	[[ -f $CPU_LOG_FILE_4 ]] && rm $CPU_LOG_FILE_4
 	[[ -f $CPU_LOG_FILE_5 ]] && rm $CPU_LOG_FILE_5
 
-	[[ -f $RAM_LOG_FILE ]] && rm $RAM_LOG_FILE
+	[[ -f $RAM_LOG_FILE_W ]] && rm $RAM_LOG_FILE_W
+	[[ -f $RAM_LOG_FILE_R ]] && rm $RAM_LOG_FILE_R
 
 	[[ -f $GPU_LOG_FILE ]] && rm $GPU_LOG_FILE
 }
 
-sys_info()
+function sys_info()
 {
 	#Start by identifying general system information
 
@@ -154,7 +160,7 @@ sys_info()
 	fi
 }
 
-print_result()
+function print_result()
 {
 	if [ $1 == "CPU" ]
 	then
@@ -180,11 +186,19 @@ print_result()
 		fi
 	elif [ $1 == "RAM" ]
 	then
-		RAM_SCORE=$(grep "] vm" $RAM_LOG_FILE | awk -F"] vm" '{print $2}' | sed -e 's/^[ \t]*//' | awk -F" " '{print $5}' | cut -d'.' -f1)
-		echo -en "\r * RAM Results :  \n"
-		printf "\r   - Stress-ng : $gr%5s$nc\n" $RAM_SCORE
+		if [ $2 == "1" ]
+		then
+			echo -en "\r * RAM Results :  \n"
+			RAM_SCORE_W=$(tail -1 $RAM_LOG_FILE_W | cut -d' ' -f6)
+			printf "\r   - Write (dd): $gr%5s $nc(MB/s)\n" $RAM_SCORE_W
+		elif [ $2 == "2" ]
+		then
+			RAM_SCORE_R=$(tail -1 $RAM_LOG_FILE_R | cut -d' ' -f6)
+			printf "\r   - Read  (dd): $gr%5s $nc(MB/s)\n" $RAM_SCORE_R
+		fi
 	elif [ $1 == "GPU" ]
 	then
+		#Show activity while waiting for GPU test to end
 		while [ -d /proc/$GPU_TEST_PID ]; do
 			sleep 1
 			echo -ne "\r * GPU Testing   "
@@ -201,7 +215,71 @@ print_result()
 	fi
 }
 
-launch_all_tests()
+# Function to test the RAM
+# Description: The test will mount a tmpfs filesystem in RAM
+# and use dd bash command to write/read data into/from it.
+# $1: Size of RAM to test
+# $2: Nb of retry to afine the results
+function do_ram_test()
+{
+	#Init local args
+	local size=$1
+	local nb_retry=$2
+
+	#Check if enought memory is free
+	local free=$(bc <<< `cat /proc/meminfo | grep MemFree | sed 's/[^0-9]//g'`/1000)
+	if [ $free -lt $size ]
+	then
+		echo "ERROR: Not enought memory. Only $free/$size MB is available."
+		exit 1
+	fi
+
+	#Create and mount a tmpfs filesystem with the given size
+	mkdir -p /mnt/ram_test
+	mount -t tmpfs -o size=${size}M tmpfs /mnt/ram_test
+
+	#Do n write test of memory
+	echo -en " * RAM Testing..." && [[ $VERBOSE -eq 1 ]] && echo ""
+	for n in `seq 1 $nb_retry`
+	do
+		dd if=/dev/zero of=/mnt/ram_test/test bs=1M conv=fsync &>> $RAM_LOG_FILE_W
+	done
+
+	#Calculate write result average in MB/s
+	local result=0
+	for time in `grep "copied" $RAM_LOG_FILE_W | cut -d' ' -f8`
+	do
+		local n=$(bc <<< $size/$time)
+		result=$(($result+$n))
+	done
+	eval echo "RAM write speed average : $(($result/$nb_retry)) MB/s" $VERBOSITY_LOG_TOKEN $RAM_LOG_FILE_W
+
+	print_result "RAM" "1"
+
+	#Do read test of memory
+	echo -en " * RAM Testing..." && [[ $VERBOSE -eq 1 ]] && echo ""
+	for n in `seq 1 $nb_retry`
+	do
+		dd if=/mnt/ram_test/test of=/dev/null bs=1M conv=fsync &>> $RAM_LOG_FILE_R
+	done
+
+	#Calculate read result average in MB/s
+	local result=0
+	for time in `grep "copied" $RAM_LOG_FILE_R | cut -d' ' -f8`
+	do
+		local n=$(bc <<< $size/$time)
+		result=$(($result+$n))
+	done
+	eval echo "RAM read speed average : $(($result/$nb_retry)) MB/s" $VERBOSITY_LOG_TOKEN $RAM_LOG_FILE_R
+
+	print_result "RAM" "2"
+
+	#Clean test files
+	rm -f /mnt/ram_test/test
+	umount /mnt/ram_test
+}
+
+function launch_all_tests()
 {
 	echo " Start benchmarking..."
 
@@ -223,29 +301,42 @@ launch_all_tests()
 	print_result "CPU" "5"
 
 	#RAM benchmarking
-	echo -en " * RAM Testing..." && [[ $VERBOSE -eq 1 ]] && echo ""
-	eval stress-ng --vm 1 --vm-bytes 128M --metrics-brief --timeout 10s $VERBOSITY_LOG_TOKEN $RAM_LOG_FILE
-	print_result "RAM"
+	do_ram_test 500 10
 
 	#GPU benchmarking
 	if [ $EXCLUDE_GPU_TEST -eq 0 ]
 	then
 		echo -en " * GPU Testing..." && [[ $VERBOSE -eq 1 ]] && echo ""
+		#Test is long so put it in background to be able show activity when waiting the end
 		eval glmark2-es2-wayland --off-screen $VERBOSITY_LOG_TOKEN $GPU_LOG_FILE&
 		GPU_TEST_PID=$!
-# 		eval glmark2-es2-wayland --off-screen --benchmark "build" $VERBOSITY_LOG_TOKEN $GPU_LOG_FILE
 		print_result "GPU"
 	else
 		GPU_SCORE=0
 	fi
 
 	echo ""
+}
 
+function compute_print_score()
+{
+	#Calculate the score by ajusting them with the predefined weight
 	MOY_CPU_SCORE=$((($CPU_SCORE1*$CPU_SCORE1_WEIGHT+$CPU_SCORE2*$CPU_SCORE2_WEIGHT+$CPU_SCORE3*$CPU_SCORE3_WEIGHT+$CPU_SCORE4*$CPU_SCORE4_WEIGHT+$CPU_SCORE5*$CPU_SCORE5_WEIGHT)/5))
 	AGL_CPU_SCORE=$(($MOY_CPU_SCORE*$CPU_WEIGHT/$WEIGHT))
-	AGL_RAM_SCORE=$(($RAM_SCORE*$RAM_WEIGHT/$WEIGHT))
+	MOY_RAM_SCORE=$((($RAM_SCORE_W+$RAM_SCORE_R)/2))
+	AGL_RAM_SCORE=$(($MOY_RAM_SCORE*$RAM_WEIGHT/$WEIGHT))
 	AGL_GPU_SCORE=$(($GPU_SCORE*$GPU_WEIGHT/$WEIGHT))
+	
 	AGL_SCORE=$(($AGL_CPU_SCORE+$AGL_RAM_SCORE+$AGL_GPU_SCORE))
+
+	echo -e "$rd######################################"
+	printf "#$nc Your AGL Benchmarking score: $gr%5s $rd#\n" $AGL_SCORE
+	echo -e "$rd######################################"
+	printf "#$nc Score details:                     $rd#\n"
+	printf "#$nc  * CPU: $gr%5s                      $rd#\n" $AGL_CPU_SCORE
+	printf "#$nc  * RAM: $gr%5s                      $rd#\n" $AGL_RAM_SCORE
+	[[ $EXCLUDE_GPU_TEST -eq 0 ]] && printf "#$nc  * GPU: $gr%5s                      $rd#\n" $AGL_GPU_SCORE
+	echo -e "$rd######################################$nc"
 }
 
 ###############################################################################################
@@ -255,21 +346,17 @@ echo -e "$rd######################################"
 echo -e "#$nc   AGL Benchmarking script - v$VERSION   $rd#"
 echo -e "$rd######################################$nc\n"
 
-
+#Clean first
 clean
 
+#Print system information if requested
 sys_info
 
+#Start the benchmark
 launch_all_tests
 
+#Calculate and print the final score and summary
+compute_print_score
 
-echo -e "$rd######################################"
-printf "#$nc Your AGL Benchmarking score: $gr%5s $rd#\n" $AGL_SCORE
-echo -e "$rd######################################"
-printf "#$nc Score details:                     $rd#\n"
-printf "#$nc  * CPU: $gr%5s                      $rd#\n" $AGL_CPU_SCORE
-printf "#$nc  * RAM: $gr%5s                      $rd#\n" $AGL_RAM_SCORE
-[[ $EXCLUDE_GPU_TEST -eq 0 ]] && printf "#$nc  * GPU: $gr%5s                      $rd#\n" $AGL_GPU_SCORE
-echo -e "$rd######################################$nc"
 
 exit 0
