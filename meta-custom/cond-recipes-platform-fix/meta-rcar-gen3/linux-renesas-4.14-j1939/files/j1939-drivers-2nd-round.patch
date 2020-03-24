@@ -1,0 +1,944 @@
+diff --git a/drivers/net/can/c_can/c_can.c b/drivers/net/can/c_can/c_can.c
+index 606b7d8ffe13..8e9f5620c9a2 100644
+--- a/drivers/net/can/c_can/c_can.c
++++ b/drivers/net/can/c_can/c_can.c
+@@ -52,6 +52,7 @@
+ #define CONTROL_EX_PDR		BIT(8)
+ 
+ /* control register */
++#define CONTROL_SWR		BIT(15)
+ #define CONTROL_TEST		BIT(7)
+ #define CONTROL_CCE		BIT(6)
+ #define CONTROL_DISABLE_AR	BIT(5)
+@@ -97,6 +98,9 @@
+ #define BTR_TSEG2_SHIFT		12
+ #define BTR_TSEG2_MASK		(0x7 << BTR_TSEG2_SHIFT)
+ 
++/* interrupt register */
++#define INT_STS_PENDING		0x8000
++
+ /* brp extension register */
+ #define BRP_EXT_BRPE_MASK	0x0f
+ #define BRP_EXT_BRPE_SHIFT	0
+@@ -569,6 +573,26 @@ static void c_can_configure_msg_objects(struct net_device *dev)
+ 				   IF_MCONT_RCV_EOB);
+ }
+ 
++static int c_can_software_reset(struct net_device *dev)
++{
++	struct c_can_priv *priv = netdev_priv(dev);
++	int retry = 0;
++
++	if (priv->type != BOSCH_D_CAN)
++		return 0;
++
++	priv->write_reg(priv, C_CAN_CTRL_REG, CONTROL_SWR | CONTROL_INIT);
++	while (priv->read_reg(priv, C_CAN_CTRL_REG) & CONTROL_SWR) {
++		msleep(20);
++		if (retry++ > 100) {
++			netdev_err(dev, "CCTRL: software reset failed\n");
++			return -EIO;
++		}
++	}
++
++	return 0;
++}
++
+ /*
+  * Configure C_CAN chip:
+  * - enable/disable auto-retransmission
+@@ -578,6 +602,11 @@ static void c_can_configure_msg_objects(struct net_device *dev)
+ static int c_can_chip_config(struct net_device *dev)
+ {
+ 	struct c_can_priv *priv = netdev_priv(dev);
++	int err;
++
++	err = c_can_software_reset(dev);
++	if (err)
++		return err;
+ 
+ 	/* enable automatic retransmission */
+ 	priv->write_reg(priv, C_CAN_CTRL_REG, CONTROL_ENABLE_AR);
+@@ -886,6 +915,9 @@ static int c_can_handle_state_change(struct net_device *dev,
+ 	struct can_berr_counter bec;
+ 
+ 	switch (error_type) {
++	case C_CAN_NO_ERROR:
++		priv->can.state = CAN_STATE_ERROR_ACTIVE;
++		break;
+ 	case C_CAN_ERROR_WARNING:
+ 		/* error warning state */
+ 		priv->can.can_stats.error_warning++;
+@@ -916,6 +948,13 @@ static int c_can_handle_state_change(struct net_device *dev,
+ 				ERR_CNT_RP_SHIFT;
+ 
+ 	switch (error_type) {
++	case C_CAN_NO_ERROR:
++		/* error warning state */
++		cf->can_id |= CAN_ERR_CRTL;
++		cf->data[1] = CAN_ERR_CRTL_ACTIVE;
++		cf->data[6] = bec.txerr;
++		cf->data[7] = bec.rxerr;
++		break;
+ 	case C_CAN_ERROR_WARNING:
+ 		/* error warning state */
+ 		cf->can_id |= CAN_ERR_CRTL;
+@@ -1029,10 +1068,16 @@ static int c_can_poll(struct napi_struct *napi, int quota)
+ 	u16 curr, last = priv->last_status;
+ 	int work_done = 0;
+ 
+-	priv->last_status = curr = priv->read_reg(priv, C_CAN_STS_REG);
+-	/* Ack status on C_CAN. D_CAN is self clearing */
+-	if (priv->type != BOSCH_D_CAN)
+-		priv->write_reg(priv, C_CAN_STS_REG, LEC_UNUSED);
++	/* Only read the status register if a status interrupt was pending */
++	if (atomic_xchg(&priv->sie_pending, 0)) {
++		priv->last_status = curr = priv->read_reg(priv, C_CAN_STS_REG);
++		/* Ack status on C_CAN. D_CAN is self clearing */
++		if (priv->type != BOSCH_D_CAN)
++			priv->write_reg(priv, C_CAN_STS_REG, LEC_UNUSED);
++	} else {
++		/* no change detected ... */
++		curr = last;
++	}
+ 
+ 	/* handle state changes */
+ 	if ((curr & STATUS_EWARN) && (!(last & STATUS_EWARN))) {
+@@ -1054,11 +1099,17 @@ static int c_can_poll(struct napi_struct *napi, int quota)
+ 	/* handle bus recovery events */
+ 	if ((!(curr & STATUS_BOFF)) && (last & STATUS_BOFF)) {
+ 		netdev_dbg(dev, "left bus off state\n");
+-		priv->can.state = CAN_STATE_ERROR_ACTIVE;
++		work_done += c_can_handle_state_change(dev, C_CAN_ERROR_PASSIVE);
+ 	}
++
+ 	if ((!(curr & STATUS_EPASS)) && (last & STATUS_EPASS)) {
+ 		netdev_dbg(dev, "left error passive state\n");
+-		priv->can.state = CAN_STATE_ERROR_ACTIVE;
++		work_done += c_can_handle_state_change(dev, C_CAN_ERROR_WARNING);
++	}
++
++	if ((!(curr & STATUS_EWARN)) && (last & STATUS_EWARN)) {
++		netdev_dbg(dev, "left error warning state\n");
++		work_done += c_can_handle_state_change(dev, C_CAN_NO_ERROR);
+ 	}
+ 
+ 	/* handle lec errors on the bus */
+@@ -1083,10 +1134,16 @@ static irqreturn_t c_can_isr(int irq, void *dev_id)
+ {
+ 	struct net_device *dev = (struct net_device *)dev_id;
+ 	struct c_can_priv *priv = netdev_priv(dev);
++	int reg_int;
+ 
+-	if (!priv->read_reg(priv, C_CAN_INT_REG))
++	reg_int = priv->read_reg(priv, C_CAN_INT_REG);
++	if (!reg_int)
+ 		return IRQ_NONE;
+ 
++	/* save for later use */
++	if (reg_int & INT_STS_PENDING)
++		atomic_set(&priv->sie_pending, 1);
++
+ 	/* disable all interrupts and schedule the NAPI */
+ 	c_can_irq_control(priv, false);
+ 	napi_schedule(&priv->napi);
+diff --git a/drivers/net/can/c_can/c_can.h b/drivers/net/can/c_can/c_can.h
+index 8acdc7fa4792..d5567a7c1c6d 100644
+--- a/drivers/net/can/c_can/c_can.h
++++ b/drivers/net/can/c_can/c_can.h
+@@ -198,6 +198,7 @@ struct c_can_priv {
+ 	struct net_device *dev;
+ 	struct device *device;
+ 	atomic_t tx_active;
++	atomic_t sie_pending;
+ 	unsigned long tx_dir;
+ 	int last_status;
+ 	u16 (*read_reg) (const struct c_can_priv *priv, enum reg index);
+diff --git a/drivers/net/can/dev.c b/drivers/net/can/dev.c
+index ac86be52b461..1c88c361938c 100644
+--- a/drivers/net/can/dev.c
++++ b/drivers/net/can/dev.c
+@@ -848,6 +848,7 @@ void of_can_transceiver(struct net_device *dev)
+ 		return;
+ 
+ 	ret = of_property_read_u32(dn, "max-bitrate", &priv->bitrate_max);
++	of_node_put(dn);
+ 	if ((ret && ret != -EINVAL) || (!ret && !priv->bitrate_max))
+ 		netdev_warn(dev, "Invalid value for transceiver max bitrate. Ignoring bitrate limit.\n");
+ }
+diff --git a/drivers/net/can/flexcan.c b/drivers/net/can/flexcan.c
+index dc5695dffc2e..57f9a2f51085 100644
+--- a/drivers/net/can/flexcan.c
++++ b/drivers/net/can/flexcan.c
+@@ -677,6 +677,7 @@ static void flexcan_irq_bus_err(struct net_device *dev, u32 reg_esr)
+ 	struct can_frame *cf;
+ 	bool rx_errors = false, tx_errors = false;
+ 	u32 timestamp;
++	int err;
+ 
+ 	timestamp = priv->read(&regs->timer) << 16;
+ 
+@@ -725,7 +726,9 @@ static void flexcan_irq_bus_err(struct net_device *dev, u32 reg_esr)
+ 	if (tx_errors)
+ 		dev->stats.tx_errors++;
+ 
+-	can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	if (err)
++		dev->stats.rx_fifo_errors++;
+ }
+ 
+ static void flexcan_irq_state(struct net_device *dev, u32 reg_esr)
+@@ -738,6 +741,7 @@ static void flexcan_irq_state(struct net_device *dev, u32 reg_esr)
+ 	int flt;
+ 	struct can_berr_counter bec;
+ 	u32 timestamp;
++	int err;
+ 
+ 	timestamp = priv->read(&regs->timer) << 16;
+ 
+@@ -769,7 +773,9 @@ static void flexcan_irq_state(struct net_device *dev, u32 reg_esr)
+ 	if (unlikely(new_state == CAN_STATE_BUS_OFF))
+ 		can_bus_off(dev);
+ 
+-	can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	if (err)
++		dev->stats.rx_fifo_errors++;
+ }
+ 
+ static inline struct flexcan_priv *rx_offload_to_priv(struct can_rx_offload *offload)
+@@ -1188,6 +1194,7 @@ static int flexcan_chip_start(struct net_device *dev)
+ 		reg_mecr = priv->read(&regs->mecr);
+ 		reg_mecr &= ~FLEXCAN_MECR_ECRWRDIS;
+ 		priv->write(reg_mecr, &regs->mecr);
++		reg_mecr |= FLEXCAN_MECR_ECCDIS;
+ 		reg_mecr &= ~(FLEXCAN_MECR_NCEFAFRZ | FLEXCAN_MECR_HANCEI_MSK |
+ 			      FLEXCAN_MECR_FANCEI_MSK);
+ 		priv->write(reg_mecr, &regs->mecr);
+diff --git a/drivers/net/can/m_can/m_can_platform.c b/drivers/net/can/m_can/m_can_platform.c
+index 6ac4c35f247a..38ea5e600fb8 100644
+--- a/drivers/net/can/m_can/m_can_platform.c
++++ b/drivers/net/can/m_can/m_can_platform.c
+@@ -107,7 +107,7 @@ static int m_can_plat_probe(struct platform_device *pdev)
+ 
+ 	mcan_class->is_peripheral = false;
+ 
+-	platform_set_drvdata(pdev, mcan_class->dev);
++	platform_set_drvdata(pdev, mcan_class->net);
+ 
+ 	m_can_init_ram(mcan_class);
+ 
+@@ -166,8 +166,6 @@ static int __maybe_unused m_can_runtime_resume(struct device *dev)
+ 	if (err)
+ 		clk_disable_unprepare(mcan_class->hclk);
+ 
+-	m_can_class_resume(dev);
+-
+ 	return err;
+ }
+ 
+diff --git a/drivers/net/can/rx-offload.c b/drivers/net/can/rx-offload.c
+index e6a668ee7730..84cae167e42f 100644
+--- a/drivers/net/can/rx-offload.c
++++ b/drivers/net/can/rx-offload.c
+@@ -107,37 +107,95 @@ static int can_rx_offload_compare(struct sk_buff *a, struct sk_buff *b)
+ 	return cb_b->timestamp - cb_a->timestamp;
+ }
+ 
+-static struct sk_buff *can_rx_offload_offload_one(struct can_rx_offload *offload, unsigned int n)
++/**
++ * can_rx_offload_offload_one() - Read one CAN frame from HW
++ * @offload: pointer to rx_offload context
++ * @n: number of mailbox to read
++ *
++ * The task of this function is to read a CAN frame from mailbox @n
++ * from the device and return the mailbox's content as a struct
++ * sk_buff.
++ *
++ * If the struct can_rx_offload::skb_queue exceeds the maximal queue
++ * length (struct can_rx_offload::skb_queue_len_max) or no skb can be
++ * allocated, the mailbox contents is discarded by reading it into an
++ * overflow buffer. This way the mailbox is marked as free by the
++ * driver.
++ *
++ * Return: A pointer to skb containing the CAN frame on success.
++ *
++ *         NULL if the mailbox @n is empty.
++ *
++ *         ERR_PTR() in case of an error
++ */
++static struct sk_buff *
++can_rx_offload_offload_one(struct can_rx_offload *offload, unsigned int n)
+ {
+-	struct sk_buff *skb = NULL;
++	struct sk_buff *skb = NULL, *skb_error = NULL;
+ 	struct can_rx_offload_cb *cb;
+ 	struct can_frame *cf;
+ 	int ret;
+ 
+-	/* If queue is full or skb not available, read to discard mailbox */
+-	if (likely(skb_queue_len(&offload->skb_queue) <=
+-		   offload->skb_queue_len_max))
++	if (likely(skb_queue_len(&offload->skb_queue) <
++		   offload->skb_queue_len_max)) {
+ 		skb = alloc_can_skb(offload->dev, &cf);
++		if (unlikely(!skb))
++			skb_error = ERR_PTR(-ENOMEM);	/* skb alloc failed */
++	} else {
++		skb_error = ERR_PTR(-ENOBUFS);		/* skb_queue is full */
++	}
+ 
+-	if (!skb) {
++	/* If queue is full or skb not available, drop by reading into
++	 * overflow buffer.
++	 */
++	if (unlikely(skb_error)) {
+ 		struct can_frame cf_overflow;
+ 		u32 timestamp;
+ 
+ 		ret = offload->mailbox_read(offload, &cf_overflow,
+ 					    &timestamp, n);
+-		if (ret)
+-			offload->dev->stats.rx_dropped++;
+ 
+-		return NULL;
++		/* Mailbox was empty. */
++		if (unlikely(!ret))
++			return NULL;
++
++		/* Mailbox has been read and we're dropping it or
++		 * there was a problem reading the mailbox.
++		 *
++		 * Increment error counters in any case.
++		 */
++		offload->dev->stats.rx_dropped++;
++		offload->dev->stats.rx_fifo_errors++;
++
++		/* There was a problem reading the mailbox, propagate
++		 * error value.
++		 */
++		if (unlikely(ret < 0))
++			return ERR_PTR(ret);
++
++		return skb_error;
+ 	}
+ 
+ 	cb = can_rx_offload_get_cb(skb);
+ 	ret = offload->mailbox_read(offload, cf, &cb->timestamp, n);
+-	if (!ret) {
++
++	/* Mailbox was empty. */
++	if (unlikely(!ret)) {
+ 		kfree_skb(skb);
+ 		return NULL;
+ 	}
+ 
++	/* There was a problem reading the mailbox, propagate error value. */
++	if (unlikely(ret < 0)) {
++		kfree_skb(skb);
++
++		offload->dev->stats.rx_dropped++;
++		offload->dev->stats.rx_fifo_errors++;
++
++		return ERR_PTR(ret);
++	}
++
++	/* Mailbox was read. */
+ 	return skb;
+ }
+ 
+@@ -157,8 +215,8 @@ int can_rx_offload_irq_offload_timestamp(struct can_rx_offload *offload, u64 pen
+ 			continue;
+ 
+ 		skb = can_rx_offload_offload_one(offload, i);
+-		if (!skb)
+-			break;
++		if (IS_ERR_OR_NULL(skb))
++			continue;
+ 
+ 		__skb_queue_add_sort(&skb_queue, skb, can_rx_offload_compare);
+ 	}
+@@ -188,7 +246,13 @@ int can_rx_offload_irq_offload_fifo(struct can_rx_offload *offload)
+ 	struct sk_buff *skb;
+ 	int received = 0;
+ 
+-	while ((skb = can_rx_offload_offload_one(offload, 0))) {
++	while (1) {
++		skb = can_rx_offload_offload_one(offload, 0);
++		if (IS_ERR(skb))
++			continue;
++		if (!skb)
++			break;
++
+ 		skb_queue_tail(&offload->skb_queue, skb);
+ 		received++;
+ 	}
+@@ -207,8 +271,10 @@ int can_rx_offload_queue_sorted(struct can_rx_offload *offload,
+ 	unsigned long flags;
+ 
+ 	if (skb_queue_len(&offload->skb_queue) >
+-	    offload->skb_queue_len_max)
+-		return -ENOMEM;
++	    offload->skb_queue_len_max) {
++		kfree_skb(skb);
++		return -ENOBUFS;
++	}
+ 
+ 	cb = can_rx_offload_get_cb(skb);
+ 	cb->timestamp = timestamp;
+@@ -250,8 +316,10 @@ int can_rx_offload_queue_tail(struct can_rx_offload *offload,
+ 			      struct sk_buff *skb)
+ {
+ 	if (skb_queue_len(&offload->skb_queue) >
+-	    offload->skb_queue_len_max)
+-		return -ENOMEM;
++	    offload->skb_queue_len_max) {
++		kfree_skb(skb);
++		return -ENOBUFS;
++	}
+ 
+ 	skb_queue_tail(&offload->skb_queue, skb);
+ 	can_rx_offload_schedule(offload);
+diff --git a/drivers/net/can/slcan.c b/drivers/net/can/slcan.c
+index bb6032211043..2e57122f02fb 100644
+--- a/drivers/net/can/slcan.c
++++ b/drivers/net/can/slcan.c
+@@ -617,6 +617,8 @@ static int slcan_open(struct tty_struct *tty)
+ 	sl->tty = NULL;
+ 	tty->disc_data = NULL;
+ 	clear_bit(SLF_INUSE, &sl->flags);
++	slc_free_netdev(sl->dev);
++	free_netdev(sl->dev);
+ 
+ err_exit:
+ 	rtnl_unlock();
+diff --git a/drivers/net/can/ti_hecc.c b/drivers/net/can/ti_hecc.c
+index f8b19eef5d26..31ad364a89bb 100644
+--- a/drivers/net/can/ti_hecc.c
++++ b/drivers/net/can/ti_hecc.c
+@@ -73,6 +73,7 @@ MODULE_VERSION(HECC_MODULE_VERSION);
+  */
+ #define HECC_MAX_RX_MBOX	(HECC_MAX_MAILBOXES - HECC_MAX_TX_MBOX)
+ #define HECC_RX_FIRST_MBOX	(HECC_MAX_MAILBOXES - 1)
++#define HECC_RX_LAST_MBOX	(HECC_MAX_TX_MBOX)
+ 
+ /* TI HECC module registers */
+ #define HECC_CANME		0x0	/* Mailbox enable */
+@@ -82,7 +83,7 @@ MODULE_VERSION(HECC_MODULE_VERSION);
+ #define HECC_CANTA		0x10	/* Transmission acknowledge */
+ #define HECC_CANAA		0x14	/* Abort acknowledge */
+ #define HECC_CANRMP		0x18	/* Receive message pending */
+-#define HECC_CANRML		0x1C	/* Remote message lost */
++#define HECC_CANRML		0x1C	/* Receive message lost */
+ #define HECC_CANRFP		0x20	/* Remote frame pending */
+ #define HECC_CANGAM		0x24	/* SECC only:Global acceptance mask */
+ #define HECC_CANMC		0x28	/* Master control */
+@@ -149,6 +150,8 @@ MODULE_VERSION(HECC_MODULE_VERSION);
+ #define HECC_BUS_ERROR		(HECC_CANES_FE | HECC_CANES_BE |\
+ 				HECC_CANES_CRCE | HECC_CANES_SE |\
+ 				HECC_CANES_ACKE)
++#define HECC_CANES_FLAGS	(HECC_BUS_ERROR | HECC_CANES_BO |\
++				HECC_CANES_EP | HECC_CANES_EW)
+ 
+ #define HECC_CANMCF_RTR		BIT(4)	/* Remote transmit request */
+ 
+@@ -382,8 +385,18 @@ static void ti_hecc_start(struct net_device *ndev)
+ 		hecc_set_bit(priv, HECC_CANMIM, mbx_mask);
+ 	}
+ 
+-	/* Prevent message over-write & Enable interrupts */
+-	hecc_write(priv, HECC_CANOPC, HECC_SET_REG);
++	/* Enable tx interrupts */
++	hecc_set_bit(priv, HECC_CANMIM, BIT(HECC_MAX_TX_MBOX) - 1);
++
++	/* Prevent message over-write to create a rx fifo, but not for
++	 * the lowest priority mailbox, since that allows detecting
++	 * overflows instead of the hardware silently dropping the
++	 * messages.
++	 */
++	mbx_mask = ~BIT(HECC_RX_LAST_MBOX);
++	hecc_write(priv, HECC_CANOPC, mbx_mask);
++
++	/* Enable interrupts */
+ 	if (priv->use_hecc1int) {
+ 		hecc_write(priv, HECC_CANMIL, HECC_SET_REG);
+ 		hecc_write(priv, HECC_CANGIM, HECC_CANGIM_DEF_MASK |
+@@ -400,6 +413,9 @@ static void ti_hecc_stop(struct net_device *ndev)
+ {
+ 	struct ti_hecc_priv *priv = netdev_priv(ndev);
+ 
++	/* Disable the CPK; stop sending, erroring and acking */
++	hecc_set_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
++
+ 	/* Disable interrupts and disable mailboxes */
+ 	hecc_write(priv, HECC_CANGIM, 0);
+ 	hecc_write(priv, HECC_CANMIM, 0);
+@@ -508,8 +524,6 @@ static netdev_tx_t ti_hecc_xmit(struct sk_buff *skb, struct net_device *ndev)
+ 	hecc_set_bit(priv, HECC_CANME, mbx_mask);
+ 	spin_unlock_irqrestore(&priv->mbx_lock, flags);
+ 
+-	hecc_clear_bit(priv, HECC_CANMD, mbx_mask);
+-	hecc_set_bit(priv, HECC_CANMIM, mbx_mask);
+ 	hecc_write(priv, HECC_CANTRS, mbx_mask);
+ 
+ 	return NETDEV_TX_OK;
+@@ -526,8 +540,10 @@ static unsigned int ti_hecc_mailbox_read(struct can_rx_offload *offload,
+ 					 u32 *timestamp, unsigned int mbxno)
+ {
+ 	struct ti_hecc_priv *priv = rx_offload_to_priv(offload);
+-	u32 data;
++	u32 data, mbx_mask;
++	int ret = 1;
+ 
++	mbx_mask = BIT(mbxno);
+ 	data = hecc_read_mbx(priv, mbxno, HECC_CANMID);
+ 	if (data & HECC_CANMID_IDE)
+ 		cf->can_id = (data & CAN_EFF_MASK) | CAN_EFF_FLAG;
+@@ -548,7 +564,25 @@ static unsigned int ti_hecc_mailbox_read(struct can_rx_offload *offload,
+ 
+ 	*timestamp = hecc_read_stamp(priv, mbxno);
+ 
+-	return 1;
++	/* Check for FIFO overrun.
++	 *
++	 * All but the last RX mailbox have activated overwrite
++	 * protection. So skip check for overrun, if we're not
++	 * handling the last RX mailbox.
++	 *
++	 * As the overwrite protection for the last RX mailbox is
++	 * disabled, the CAN core might update while we're reading
++	 * it. This means the skb might be inconsistent.
++	 *
++	 * Return an error to let rx-offload discard this CAN frame.
++	 */
++	if (unlikely(mbxno == HECC_RX_LAST_MBOX &&
++		     hecc_read(priv, HECC_CANRML) & mbx_mask))
++		ret = -ENOBUFS;
++
++	hecc_write(priv, HECC_CANRMP, mbx_mask);
++
++	return ret;
+ }
+ 
+ static int ti_hecc_error(struct net_device *ndev, int int_status,
+@@ -558,92 +592,73 @@ static int ti_hecc_error(struct net_device *ndev, int int_status,
+ 	struct can_frame *cf;
+ 	struct sk_buff *skb;
+ 	u32 timestamp;
++	int err;
+ 
+-	/* propagate the error condition to the can stack */
+-	skb = alloc_can_err_skb(ndev, &cf);
+-	if (!skb) {
+-		if (printk_ratelimit())
+-			netdev_err(priv->ndev,
+-				   "%s: alloc_can_err_skb() failed\n",
+-				   __func__);
+-		return -ENOMEM;
+-	}
+-
+-	if (int_status & HECC_CANGIF_WLIF) { /* warning level int */
+-		if ((int_status & HECC_CANGIF_BOIF) == 0) {
+-			priv->can.state = CAN_STATE_ERROR_WARNING;
+-			++priv->can.can_stats.error_warning;
+-			cf->can_id |= CAN_ERR_CRTL;
+-			if (hecc_read(priv, HECC_CANTEC) > 96)
+-				cf->data[1] |= CAN_ERR_CRTL_TX_WARNING;
+-			if (hecc_read(priv, HECC_CANREC) > 96)
+-				cf->data[1] |= CAN_ERR_CRTL_RX_WARNING;
+-		}
+-		hecc_set_bit(priv, HECC_CANES, HECC_CANES_EW);
+-		netdev_dbg(priv->ndev, "Error Warning interrupt\n");
+-		hecc_clear_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
+-	}
+-
+-	if (int_status & HECC_CANGIF_EPIF) { /* error passive int */
+-		if ((int_status & HECC_CANGIF_BOIF) == 0) {
+-			priv->can.state = CAN_STATE_ERROR_PASSIVE;
+-			++priv->can.can_stats.error_passive;
+-			cf->can_id |= CAN_ERR_CRTL;
+-			if (hecc_read(priv, HECC_CANTEC) > 127)
+-				cf->data[1] |= CAN_ERR_CRTL_TX_PASSIVE;
+-			if (hecc_read(priv, HECC_CANREC) > 127)
+-				cf->data[1] |= CAN_ERR_CRTL_RX_PASSIVE;
++	if (err_status & HECC_BUS_ERROR) {
++		/* propagate the error condition to the can stack */
++		skb = alloc_can_err_skb(ndev, &cf);
++		if (!skb) {
++			if (net_ratelimit())
++				netdev_err(priv->ndev,
++					   "%s: alloc_can_err_skb() failed\n",
++					   __func__);
++			return -ENOMEM;
+ 		}
+-		hecc_set_bit(priv, HECC_CANES, HECC_CANES_EP);
+-		netdev_dbg(priv->ndev, "Error passive interrupt\n");
+-		hecc_clear_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
+-	}
+-
+-	/* Need to check busoff condition in error status register too to
+-	 * ensure warning interrupts don't hog the system
+-	 */
+-	if ((int_status & HECC_CANGIF_BOIF) || (err_status & HECC_CANES_BO)) {
+-		priv->can.state = CAN_STATE_BUS_OFF;
+-		cf->can_id |= CAN_ERR_BUSOFF;
+-		hecc_set_bit(priv, HECC_CANES, HECC_CANES_BO);
+-		hecc_clear_bit(priv, HECC_CANMC, HECC_CANMC_CCR);
+-		/* Disable all interrupts in bus-off to avoid int hog */
+-		hecc_write(priv, HECC_CANGIM, 0);
+-		++priv->can.can_stats.bus_off;
+-		can_bus_off(ndev);
+-	}
+ 
+-	if (err_status & HECC_BUS_ERROR) {
+ 		++priv->can.can_stats.bus_error;
+ 		cf->can_id |= CAN_ERR_BUSERROR | CAN_ERR_PROT;
+-		if (err_status & HECC_CANES_FE) {
+-			hecc_set_bit(priv, HECC_CANES, HECC_CANES_FE);
++		if (err_status & HECC_CANES_FE)
+ 			cf->data[2] |= CAN_ERR_PROT_FORM;
+-		}
+-		if (err_status & HECC_CANES_BE) {
+-			hecc_set_bit(priv, HECC_CANES, HECC_CANES_BE);
++		if (err_status & HECC_CANES_BE)
+ 			cf->data[2] |= CAN_ERR_PROT_BIT;
+-		}
+-		if (err_status & HECC_CANES_SE) {
+-			hecc_set_bit(priv, HECC_CANES, HECC_CANES_SE);
++		if (err_status & HECC_CANES_SE)
+ 			cf->data[2] |= CAN_ERR_PROT_STUFF;
+-		}
+-		if (err_status & HECC_CANES_CRCE) {
+-			hecc_set_bit(priv, HECC_CANES, HECC_CANES_CRCE);
++		if (err_status & HECC_CANES_CRCE)
+ 			cf->data[3] = CAN_ERR_PROT_LOC_CRC_SEQ;
+-		}
+-		if (err_status & HECC_CANES_ACKE) {
+-			hecc_set_bit(priv, HECC_CANES, HECC_CANES_ACKE);
++		if (err_status & HECC_CANES_ACKE)
+ 			cf->data[3] = CAN_ERR_PROT_LOC_ACK;
+-		}
++
++		timestamp = hecc_read(priv, HECC_CANLNT);
++		err = can_rx_offload_queue_sorted(&priv->offload, skb,
++						  timestamp);
++		if (err)
++			ndev->stats.rx_fifo_errors++;
+ 	}
+ 
+-	timestamp = hecc_read(priv, HECC_CANLNT);
+-	can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	hecc_write(priv, HECC_CANES, HECC_CANES_FLAGS);
+ 
+ 	return 0;
+ }
+ 
++static void ti_hecc_change_state(struct net_device *ndev,
++				 enum can_state rx_state,
++				 enum can_state tx_state)
++{
++	struct ti_hecc_priv *priv = netdev_priv(ndev);
++	struct can_frame *cf;
++	struct sk_buff *skb;
++	u32 timestamp;
++	int err;
++
++	skb = alloc_can_err_skb(priv->ndev, &cf);
++	if (unlikely(!skb)) {
++		priv->can.state = max(tx_state, rx_state);
++		return;
++	}
++
++	can_change_state(priv->ndev, cf, tx_state, rx_state);
++
++	if (max(tx_state, rx_state) != CAN_STATE_BUS_OFF) {
++		cf->data[6] = hecc_read(priv, HECC_CANTEC);
++		cf->data[7] = hecc_read(priv, HECC_CANREC);
++	}
++
++	timestamp = hecc_read(priv, HECC_CANLNT);
++	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
++	if (err)
++		ndev->stats.rx_fifo_errors++;
++}
++
+ static irqreturn_t ti_hecc_interrupt(int irq, void *dev_id)
+ {
+ 	struct net_device *ndev = (struct net_device *)dev_id;
+@@ -651,6 +666,7 @@ static irqreturn_t ti_hecc_interrupt(int irq, void *dev_id)
+ 	struct net_device_stats *stats = &ndev->stats;
+ 	u32 mbxno, mbx_mask, int_status, err_status, stamp;
+ 	unsigned long flags, rx_pending;
++	u32 handled = 0;
+ 
+ 	int_status = hecc_read(priv,
+ 			       priv->use_hecc1int ?
+@@ -660,17 +676,66 @@ static irqreturn_t ti_hecc_interrupt(int irq, void *dev_id)
+ 		return IRQ_NONE;
+ 
+ 	err_status = hecc_read(priv, HECC_CANES);
+-	if (err_status & (HECC_BUS_ERROR | HECC_CANES_BO |
+-			  HECC_CANES_EP | HECC_CANES_EW))
++	if (unlikely(err_status & HECC_CANES_FLAGS))
+ 		ti_hecc_error(ndev, int_status, err_status);
+ 
++	if (unlikely(int_status & HECC_CANGIM_DEF_MASK)) {
++		enum can_state rx_state, tx_state;
++		u32 rec = hecc_read(priv, HECC_CANREC);
++		u32 tec = hecc_read(priv, HECC_CANTEC);
++
++		if (int_status & HECC_CANGIF_WLIF) {
++			handled |= HECC_CANGIF_WLIF;
++			rx_state = rec >= tec ? CAN_STATE_ERROR_WARNING : 0;
++			tx_state = rec <= tec ? CAN_STATE_ERROR_WARNING : 0;
++			netdev_dbg(priv->ndev, "Error Warning interrupt\n");
++			ti_hecc_change_state(ndev, rx_state, tx_state);
++		}
++
++		if (int_status & HECC_CANGIF_EPIF) {
++			handled |= HECC_CANGIF_EPIF;
++			rx_state = rec >= tec ? CAN_STATE_ERROR_PASSIVE : 0;
++			tx_state = rec <= tec ? CAN_STATE_ERROR_PASSIVE : 0;
++			netdev_dbg(priv->ndev, "Error passive interrupt\n");
++			ti_hecc_change_state(ndev, rx_state, tx_state);
++		}
++
++		if (int_status & HECC_CANGIF_BOIF) {
++			handled |= HECC_CANGIF_BOIF;
++			rx_state = CAN_STATE_BUS_OFF;
++			tx_state = CAN_STATE_BUS_OFF;
++			netdev_dbg(priv->ndev, "Bus off interrupt\n");
++
++			/* Disable all interrupts */
++			hecc_write(priv, HECC_CANGIM, 0);
++			can_bus_off(ndev);
++			ti_hecc_change_state(ndev, rx_state, tx_state);
++		}
++	} else if (unlikely(priv->can.state != CAN_STATE_ERROR_ACTIVE)) {
++		enum can_state new_state, tx_state, rx_state;
++		u32 rec = hecc_read(priv, HECC_CANREC);
++		u32 tec = hecc_read(priv, HECC_CANTEC);
++
++		if (rec >= 128 || tec >= 128)
++			new_state = CAN_STATE_ERROR_PASSIVE;
++		else if (rec >= 96 || tec >= 96)
++			new_state = CAN_STATE_ERROR_WARNING;
++		else
++			new_state = CAN_STATE_ERROR_ACTIVE;
++
++		if (new_state < priv->can.state) {
++			rx_state = rec >= tec ? new_state : 0;
++			tx_state = rec <= tec ? new_state : 0;
++			ti_hecc_change_state(ndev, rx_state, tx_state);
++		}
++	}
++
+ 	if (int_status & HECC_CANGIF_GMIF) {
+ 		while (priv->tx_tail - priv->tx_head > 0) {
+ 			mbxno = get_tx_tail_mb(priv);
+ 			mbx_mask = BIT(mbxno);
+ 			if (!(mbx_mask & hecc_read(priv, HECC_CANTA)))
+ 				break;
+-			hecc_clear_bit(priv, HECC_CANMIM, mbx_mask);
+ 			hecc_write(priv, HECC_CANTA, mbx_mask);
+ 			spin_lock_irqsave(&priv->mbx_lock, flags);
+ 			hecc_clear_bit(priv, HECC_CANME, mbx_mask);
+@@ -695,16 +760,15 @@ static irqreturn_t ti_hecc_interrupt(int irq, void *dev_id)
+ 		while ((rx_pending = hecc_read(priv, HECC_CANRMP))) {
+ 			can_rx_offload_irq_offload_timestamp(&priv->offload,
+ 							     rx_pending);
+-			hecc_write(priv, HECC_CANRMP, rx_pending);
+ 		}
+ 	}
+ 
+ 	/* clear all interrupt conditions - read back to avoid spurious ints */
+ 	if (priv->use_hecc1int) {
+-		hecc_write(priv, HECC_CANGIF1, HECC_SET_REG);
++		hecc_write(priv, HECC_CANGIF1, handled);
+ 		int_status = hecc_read(priv, HECC_CANGIF1);
+ 	} else {
+-		hecc_write(priv, HECC_CANGIF0, HECC_SET_REG);
++		hecc_write(priv, HECC_CANGIF0, handled);
+ 		int_status = hecc_read(priv, HECC_CANGIF0);
+ 	}
+ 
+@@ -877,7 +941,7 @@ static int ti_hecc_probe(struct platform_device *pdev)
+ 
+ 	priv->offload.mailbox_read = ti_hecc_mailbox_read;
+ 	priv->offload.mb_first = HECC_RX_FIRST_MBOX;
+-	priv->offload.mb_last = HECC_MAX_TX_MBOX;
++	priv->offload.mb_last = HECC_RX_LAST_MBOX;
+ 	err = can_rx_offload_add_timestamp(ndev, &priv->offload);
+ 	if (err) {
+ 		dev_err(&pdev->dev, "can_rx_offload_add_timestamp() failed\n");
+diff --git a/drivers/net/can/usb/gs_usb.c b/drivers/net/can/usb/gs_usb.c
+index bd6eb9967630..2f74f6704c12 100644
+--- a/drivers/net/can/usb/gs_usb.c
++++ b/drivers/net/can/usb/gs_usb.c
+@@ -623,6 +623,7 @@ static int gs_can_open(struct net_device *netdev)
+ 					   rc);
+ 
+ 				usb_unanchor_urb(urb);
++				usb_free_urb(urb);
+ 				break;
+ 			}
+ 
+diff --git a/drivers/net/can/usb/mcba_usb.c b/drivers/net/can/usb/mcba_usb.c
+index 19a702ac49e4..21faa2ec4632 100644
+--- a/drivers/net/can/usb/mcba_usb.c
++++ b/drivers/net/can/usb/mcba_usb.c
+@@ -876,9 +876,8 @@ static void mcba_usb_disconnect(struct usb_interface *intf)
+ 	netdev_info(priv->netdev, "device disconnected\n");
+ 
+ 	unregister_candev(priv->netdev);
+-	free_candev(priv->netdev);
+-
+ 	mcba_urb_unlink(priv);
++	free_candev(priv->netdev);
+ }
+ 
+ static struct usb_driver mcba_usb_driver = {
+diff --git a/drivers/net/can/usb/peak_usb/pcan_usb.c b/drivers/net/can/usb/peak_usb/pcan_usb.c
+index 617da295b6c1..d2539c95adb6 100644
+--- a/drivers/net/can/usb/peak_usb/pcan_usb.c
++++ b/drivers/net/can/usb/peak_usb/pcan_usb.c
+@@ -100,7 +100,7 @@ struct pcan_usb_msg_context {
+ 	u8 *end;
+ 	u8 rec_cnt;
+ 	u8 rec_idx;
+-	u8 rec_data_idx;
++	u8 rec_ts_idx;
+ 	struct net_device *netdev;
+ 	struct pcan_usb *pdev;
+ };
+@@ -436,8 +436,8 @@ static int pcan_usb_decode_error(struct pcan_usb_msg_context *mc, u8 n,
+ 		}
+ 		if ((n & PCAN_USB_ERROR_BUS_LIGHT) == 0) {
+ 			/* no error (back to active state) */
+-			mc->pdev->dev.can.state = CAN_STATE_ERROR_ACTIVE;
+-			return 0;
++			new_state = CAN_STATE_ERROR_ACTIVE;
++			break;
+ 		}
+ 		break;
+ 
+@@ -460,9 +460,9 @@ static int pcan_usb_decode_error(struct pcan_usb_msg_context *mc, u8 n,
+ 		}
+ 
+ 		if ((n & PCAN_USB_ERROR_BUS_HEAVY) == 0) {
+-			/* no error (back to active state) */
+-			mc->pdev->dev.can.state = CAN_STATE_ERROR_ACTIVE;
+-			return 0;
++			/* no error (back to warning state) */
++			new_state = CAN_STATE_ERROR_WARNING;
++			break;
+ 		}
+ 		break;
+ 
+@@ -501,6 +501,11 @@ static int pcan_usb_decode_error(struct pcan_usb_msg_context *mc, u8 n,
+ 		mc->pdev->dev.can.can_stats.error_warning++;
+ 		break;
+ 
++	case CAN_STATE_ERROR_ACTIVE:
++		cf->can_id |= CAN_ERR_CRTL;
++		cf->data[1] = CAN_ERR_CRTL_ACTIVE;
++		break;
++
+ 	default:
+ 		/* CAN_STATE_MAX (trick to handle other errors) */
+ 		cf->can_id |= CAN_ERR_CRTL;
+@@ -547,10 +552,15 @@ static int pcan_usb_decode_status(struct pcan_usb_msg_context *mc,
+ 	mc->ptr += PCAN_USB_CMD_ARGS;
+ 
+ 	if (status_len & PCAN_USB_STATUSLEN_TIMESTAMP) {
+-		int err = pcan_usb_decode_ts(mc, !mc->rec_idx);
++		int err = pcan_usb_decode_ts(mc, !mc->rec_ts_idx);
+ 
+ 		if (err)
+ 			return err;
++
++		/* Next packet in the buffer will have a timestamp on a single
++		 * byte
++		 */
++		mc->rec_ts_idx++;
+ 	}
+ 
+ 	switch (f) {
+@@ -632,10 +642,13 @@ static int pcan_usb_decode_data(struct pcan_usb_msg_context *mc, u8 status_len)
+ 
+ 	cf->can_dlc = get_can_dlc(rec_len);
+ 
+-	/* first data packet timestamp is a word */
+-	if (pcan_usb_decode_ts(mc, !mc->rec_data_idx))
++	/* Only first packet timestamp is a word */
++	if (pcan_usb_decode_ts(mc, !mc->rec_ts_idx))
+ 		goto decode_failed;
+ 
++	/* Next packet in the buffer will have a timestamp on a single byte */
++	mc->rec_ts_idx++;
++
+ 	/* read data */
+ 	memset(cf->data, 0x0, sizeof(cf->data));
+ 	if (status_len & PCAN_USB_STATUSLEN_RTR) {
+@@ -688,7 +701,6 @@ static int pcan_usb_decode_msg(struct peak_usb_device *dev, u8 *ibuf, u32 lbuf)
+ 		/* handle normal can frames here */
+ 		} else {
+ 			err = pcan_usb_decode_data(&mc, sl);
+-			mc.rec_data_idx++;
+ 		}
+ 	}
+ 
+diff --git a/drivers/net/can/usb/peak_usb/pcan_usb_core.c b/drivers/net/can/usb/peak_usb/pcan_usb_core.c
+index 65dce642b86b..0b7766b715fd 100644
+--- a/drivers/net/can/usb/peak_usb/pcan_usb_core.c
++++ b/drivers/net/can/usb/peak_usb/pcan_usb_core.c
+@@ -750,7 +750,7 @@ static int peak_usb_create_dev(const struct peak_usb_adapter *peak_usb_adapter,
+ 	dev = netdev_priv(netdev);
+ 
+ 	/* allocate a buffer large enough to send commands */
+-	dev->cmd_buf = kmalloc(PCAN_USB_MAX_CMD_LEN, GFP_KERNEL);
++	dev->cmd_buf = kzalloc(PCAN_USB_MAX_CMD_LEN, GFP_KERNEL);
+ 	if (!dev->cmd_buf) {
+ 		err = -ENOMEM;
+ 		goto lbl_free_candev;
+diff --git a/drivers/net/can/usb/ucan.c b/drivers/net/can/usb/ucan.c
+index 04aac3bb54ef..81e942f713e6 100644
+--- a/drivers/net/can/usb/ucan.c
++++ b/drivers/net/can/usb/ucan.c
+@@ -792,7 +792,7 @@ static void ucan_read_bulk_callback(struct urb *urb)
+ 			  up);
+ 
+ 	usb_anchor_urb(urb, &up->rx_urbs);
+-	ret = usb_submit_urb(urb, GFP_KERNEL);
++	ret = usb_submit_urb(urb, GFP_ATOMIC);
+ 
+ 	if (ret < 0) {
+ 		netdev_err(up->netdev,
+diff --git a/drivers/net/can/usb/usb_8dev.c b/drivers/net/can/usb/usb_8dev.c
+index d596a2ad7f78..8fa224b28218 100644
+--- a/drivers/net/can/usb/usb_8dev.c
++++ b/drivers/net/can/usb/usb_8dev.c
+@@ -996,9 +996,8 @@ static void usb_8dev_disconnect(struct usb_interface *intf)
+ 		netdev_info(priv->netdev, "device disconnected\n");
+ 
+ 		unregister_netdev(priv->netdev);
+-		free_candev(priv->netdev);
+-
+ 		unlink_all_urbs(priv);
++		free_candev(priv->netdev);
+ 	}
+ 
+ }
+diff --git a/drivers/net/can/xilinx_can.c b/drivers/net/can/xilinx_can.c
+index 911b34316c9d..7c482b2d78d2 100644
+--- a/drivers/net/can/xilinx_can.c
++++ b/drivers/net/can/xilinx_can.c
+@@ -1599,7 +1599,6 @@ static const struct xcan_devtype_data xcan_zynq_data = {
+ 
+ static const struct xcan_devtype_data xcan_axi_data = {
+ 	.cantype = XAXI_CAN,
+-	.flags = XCAN_FLAG_TXFEMP,
+ 	.bittiming_const = &xcan_bittiming_const,
+ 	.btr_ts2_shift = XCAN_BTR_TS2_SHIFT,
+ 	.btr_sjw_shift = XCAN_BTR_SJW_SHIFT,
