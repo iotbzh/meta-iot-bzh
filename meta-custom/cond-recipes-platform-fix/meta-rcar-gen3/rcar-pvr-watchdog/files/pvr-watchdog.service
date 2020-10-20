@@ -1,6 +1,0 @@
-[Unit]
-Description=PVR Watchdog
-
-[Service]
-ExecStart=/usr/bin/pvr-watchdog
-Type=oneshot
